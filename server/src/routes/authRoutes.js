@@ -1,20 +1,24 @@
 const express = require('express');
-const ApiResponse = require('../utils/apiResponse');
+const {
+  register,
+  login,
+  getMe,
+  updateProfile,
+  changePassword,
+  getUsers
+} = require('../controllers/authController');
 const { authenticate } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Placeholder route handlers for Phase 2 foundation
-router.post('/login', (req, res, next) => {
-  return ApiResponse.success(res, { token: 'placeholder_token' }, 'Login endpoint configured');
-});
+// Public routes
+router.post('/register', register);
+router.post('/login', login);
 
-router.post('/register', (req, res, next) => {
-  return ApiResponse.created(res, { id: 'placeholder_id' }, 'Register endpoint configured');
-});
-
-router.get('/me', authenticate, (req, res, next) => {
-  return ApiResponse.success(res, { user: req.user }, 'Current user profile');
-});
+// Authenticated routes
+router.get('/me', authenticate, getMe);
+router.put('/profile', authenticate, updateProfile);
+router.put('/change-password', authenticate, changePassword);
+router.get('/users', authenticate, getUsers);
 
 module.exports = router;

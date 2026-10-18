@@ -25,7 +25,7 @@ const authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    // Attach decoded user claims (id, email, role) to request
+    // Attach decoded user claims (id, email, role, name) to request
     req.user = decoded;
     next();
   } catch (error) {
@@ -33,6 +33,26 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+/**
+ * Role-Based Access Control (RBAC) authorization middleware
+ * @param  {...string} roles Allowed roles (e.g., 'Admin', 'Sales Rep')
+ */
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          'You do not have permission to perform this action.',
+          HTTP_STATUS.FORBIDDEN,
+          'FORBIDDEN'
+        )
+      );
+    }
+    next();
+  };
+};
+
 module.exports = {
-  authenticate
+  authenticate,
+  authorize
 };

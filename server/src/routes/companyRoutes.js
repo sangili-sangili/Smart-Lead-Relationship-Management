@@ -1,13 +1,19 @@
 const express = require('express');
-const ApiResponse = require('../utils/apiResponse');
+const {
+  getCompanies,
+  getCompanyById,
+  createCompany,
+  updateCompany,
+  deleteCompany
+} = require('../controllers/companyController');
 const { authenticate } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.use(authenticate);
-
-router.get('/', (req, res) => {
-  return ApiResponse.success(res, [], 'Companies route configured');
-});
+router.get('/', getCompanies);
+router.get('/:id', getCompanyById);
+router.post('/', authenticate, createCompany);
+router.put('/:id', authenticate, updateCompany);
+router.delete('/:id', authenticate, deleteCompany);
 
 module.exports = router;
