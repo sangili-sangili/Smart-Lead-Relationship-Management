@@ -27,9 +27,10 @@ const corsOptions = {
     // Allow server-to-server or tools with no origin
     if (!origin) return callback(null, true);
     
-    // Check if origin matches allowed origins or any localhost/127.0.0.1 port
+    // Check if origin matches allowed origins, onrender.com subdomains, or local dev ports
     const isAllowed =
       allowedOrigins.includes(origin) ||
+      /\.onrender\.com$/.test(origin) ||
       /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isAllowed) {

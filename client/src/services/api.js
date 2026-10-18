@@ -1,11 +1,32 @@
 import axios from 'axios';
 
 /**
+ * Determine the correct API base URL
+ * - In local dev (npm run dev): uses '/api' via Vite proxy to localhost:5000
+ * - In production: uses VITE_API_URL if configured, or defaults to the live Render backend
+ */
+const getBaseUrl = () => {
+  // If running locally in development, use local Vite proxy
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  // If an explicit full URL is provided in the build environment
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Cloud deployment on Render: automatically target the live backend API
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://smart-lead-relationship-management.onrender.com/api';
+  }
+  return import.meta.env.VITE_API_URL || '/api';
+};
+
+/**
  * Centralized Axios instance configured for LeadFlow CRM API
  * Uses environment variables for baseURL and includes security interceptors
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getBaseUrl(),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
