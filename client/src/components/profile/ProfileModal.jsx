@@ -93,16 +93,16 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
 
       {/* Modal Dialog Card */}
       <div
-        className="relative w-full max-w-[620px] bg-white rounded-[24px] shadow-[0_25px_60px_-15px_rgba(30,27,75,0.25)] border border-[#E2E8F0] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-[620px] bg-white dark:bg-[#15172A] rounded-[24px] shadow-[0_25px_60px_-15px_rgba(30,27,75,0.25)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-[#E2E8F0] dark:border-[#222543] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 px-8 border-b border-[#E2E8F0] flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-indigo-50/40">
+        <div className="p-6 px-8 border-b border-[#E2E8F0] dark:border-[#222543] flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-indigo-50/40 dark:from-[#15172A] dark:via-[#1A1C32] dark:to-[#15172A]">
           <div>
-            <h2 className="text-xl font-bold text-[#1E293B]">
+            <h2 className="text-xl font-bold text-[#1E293B] dark:text-white">
               Account Settings
             </h2>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[#64748B] dark:text-slate-400">
               Manage your personal information, security, and session
             </p>
           </div>
@@ -110,7 +110,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
           {/* Close button with tooltip */}
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#64748B] hover:text-[#1E293B] flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-[#64748B] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             title="Close modal"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,14 +120,14 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-[#E2E8F0] px-8 bg-slate-50/60">
+        <div className="flex border-b border-[#E2E8F0] dark:border-[#222543] px-8 bg-slate-50/60 dark:bg-white/5">
           <button
             type="button"
             onClick={() => { setActiveTab('profile'); setErrorMsg(''); setSuccessMsg(''); }}
             className={`py-3.5 text-xs font-semibold border-b-2 mr-6 transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === 'profile'
                 ? 'border-[#6366F1] text-[#6366F1]'
-                : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+                : 'border-transparent text-[#64748B] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
         {/* Content Body */}
         <div className="p-6 px-8 max-h-[460px] overflow-y-auto">
           {successMsg && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium flex items-center gap-2">
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -179,7 +179,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
           )}
 
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium flex items-center gap-2">
+            <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -190,14 +190,14 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
           {/* TAB 1: Profile Information */}
           {activeTab === 'profile' && (
             <form onSubmit={handleProfileSave} className="space-y-5">
-              <div className="flex items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-indigo-50/30 border border-[#E2E8F0]">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-xl border-2 border-white shadow-md">
+              <div className="flex items-center gap-5 p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-indigo-50/30 dark:from-[#1A1C32] dark:to-[#20233D] border border-[#E2E8F0] dark:border-white/10">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-xl border-2 border-white dark:border-white/20 shadow-md">
                   {name ? name.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#1E293B] text-base">{name}</h4>
-                  <p className="text-xs text-[#64748B] mb-1.5">{email}</p>
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#6366F1]/15 text-[#6366F1] border border-[#6366F1]/20">
+                  <h4 className="font-bold text-[#1E293B] dark:text-white text-base">{name}</h4>
+                  <p className="text-xs text-[#64748B] dark:text-slate-400 mb-1.5">{email}</p>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#6366F1]/15 text-[#6366F1] dark:text-indigo-400 border border-[#6366F1]/20">
                     {role}
                   </span>
                 </div>
@@ -205,7 +205,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Full Name
                   </label>
                   <input
@@ -213,12 +213,12 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Email Address
                   </label>
                   <input
@@ -226,30 +226,30 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Phone Number
                   </label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Role / Position
                   </label>
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all cursor-pointer"
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all cursor-pointer"
                   >
                     <option value="Admin">Admin</option>
                     <option value="Sales Rep">Sales Rep</option>
@@ -262,7 +262,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 h-11 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-[#475569] hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="px-5 h-11 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-semibold text-[#475569] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -280,7 +280,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
           {activeTab === 'security' && (
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                   Current Password
                 </label>
                 <input
@@ -289,12 +289,12 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password"
                   required
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                   New Password
                 </label>
                 <input
@@ -303,12 +303,12 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="At least 6 characters"
                   required
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1E293B] mb-1.5">
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                   Confirm New Password
                 </label>
                 <input
@@ -317,7 +317,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
                   required
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] bg-white text-sm text-[#1E293B] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
                 />
               </div>
 
@@ -329,7 +329,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                   onChange={(e) => setShowPass(e.target.checked)}
                   className="rounded text-[#6366F1] focus:ring-[#6366F1]/20 accent-[#6366F1] cursor-pointer"
                 />
-                <label htmlFor="show-pass-toggle" className="text-xs text-[#64748B] cursor-pointer select-none">
+                <label htmlFor="show-pass-toggle" className="text-xs text-[#64748B] dark:text-slate-400 cursor-pointer select-none">
                   Show passwords
                 </label>
               </div>
@@ -338,7 +338,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 h-11 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-[#475569] hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="px-5 h-11 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-semibold text-[#475569] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -354,18 +354,18 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
 
           {/* TAB 3: Logout */}
           {activeTab === 'session' && (
-            <div className="p-6 rounded-2xl bg-red-50/50 border border-red-200/80 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <div className="p-6 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </div>
 
               <div>
-                <h3 className="font-bold text-[#1E293B] text-base">
+                <h3 className="font-bold text-[#1E293B] dark:text-white text-base">
                   Sign out of your session?
                 </h3>
-                <p className="text-xs text-[#64748B] max-w-sm mx-auto mt-1">
+                <p className="text-xs text-[#64748B] dark:text-slate-400 max-w-sm mx-auto mt-1">
                   You will need to sign in again with your email and password to access LeadFlow CRM.
                 </p>
               </div>
@@ -374,7 +374,7 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 h-10 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-[#475569] hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="px-5 h-10 rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-semibold text-[#475569] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -4,6 +4,9 @@ import { ROUTES } from '../constants/routes';
 import Logo from '../components/common/Logo';
 import NotificationModal from '../components/notifications/NotificationModal';
 import ProfileModal from '../components/profile/ProfileModal';
+import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../context/ConfirmDialogContext';
+import { useTheme } from '../context/ThemeContext';
 
 const navItems = [
   {
@@ -56,10 +59,33 @@ const AppLayout = () => {
   const profileDropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const [user, setUser] = useState(() =>
     JSON.parse(localStorage.getItem('leadflow_user') || '{"name":"John Doe","role":"Admin","email":"admin@mini.crm"}')
   );
+
+  const handleLogoutClick = async () => {
+    setProfileDropdownOpen(false);
+    const confirmed = await confirm({
+      title: 'Sign out of your session?',
+      message: 'Are you sure you want to end your current session? You will need to sign in again to access LeadFlow CRM.',
+      confirmText: 'Log Out',
+      cancelText: 'Stay Logged In',
+      type: 'danger',
+      itemName: user.name || 'John Doe',
+      itemBadge: user.role || 'Admin'
+    });
+
+    if (confirmed) {
+      localStorage.removeItem('leadflow_token');
+      localStorage.removeItem('leadflow_user');
+      toast.info('Signed Out', 'You have been safely signed out of your account.');
+      navigate(ROUTES.LOGIN);
+    }
+  };
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -85,7 +111,7 @@ const AppLayout = () => {
   });
 
   return (
-    <div className="min-h-screen flex bg-[#F4F6FD] font-['Inter',sans-serif]">
+    <div className="min-h-screen flex bg-[#F4F6FD] dark:bg-[#0B0C16] text-[#1E293B] dark:text-slate-100 font-['Inter',sans-serif] transition-colors duration-200">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-[230px] bg-[#1A1C32] bg-gradient-to-b from-[#1F213D] via-[#1A1C32] to-[#141528] text-white shrink-0 sticky top-0 h-screen z-30 select-none border-r border-[#1E2042]">
         
@@ -192,13 +218,13 @@ const AppLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Bar Header with Live Widget and Quick Actions */}
-        <header className="h-[70px] bg-white border-b border-[#E2E8F0] px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20">
+        <header className="h-[70px] bg-white dark:bg-[#15172A] border-b border-[#E2E8F0] dark:border-[#222543] px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200">
           
           {/* Left Area: Mobile Trigger + Live Status / Quick Action instead of search */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden text-[#64748B] hover:text-[#1E293B] p-1.5"
+              className="md:hidden text-[#64748B] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white p-1.5 cursor-pointer"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -206,43 +232,68 @@ const AppLayout = () => {
             </button>
 
             {/* Live Pipeline Status & Date Badge */}
-            <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-50 border border-[#E2E8F0] shadow-xs">
+            <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 border border-[#E2E8F0] dark:border-white/10 shadow-xs">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-xs font-semibold text-[#1E293B]">Live Pipeline</span>
-              <span className="text-[#CBD5E1]">•</span>
-              <span className="text-xs text-[#64748B] font-medium">{todayFormatted}</span>
+              <span className="text-xs font-semibold text-[#1E293B] dark:text-slate-100">Live Pipeline</span>
+              <span className="text-[#CBD5E1] dark:text-slate-600">•</span>
+              <span className="text-xs text-[#64748B] dark:text-slate-400 font-medium">{todayFormatted}</span>
             </div>
 
-            {/* Quick Action Button */}
-            <Link
-              to={ROUTES.LEADS}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100/80 text-[#6366F1] font-semibold text-xs transition-colors border border-indigo-200/50"
+            {/* Quick Action Button with Toast Feedback */}
+            <button
+              type="button"
+              onClick={() => {
+                toast.success('Quick Lead Initialized', 'Creating new lead draft for your sales pipeline.');
+                navigate(ROUTES.LEADS);
+              }}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-500/15 hover:bg-indigo-100/80 dark:hover:bg-indigo-500/25 text-[#6366F1] dark:text-indigo-400 font-semibold text-xs transition-colors border border-indigo-200/50 dark:border-indigo-500/30 cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
               </svg>
               <span>+ Quick Lead</span>
-            </Link>
+            </button>
           </div>
 
-          {/* Right Actions: Notifications & Profile Dropdown */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* Right Actions: Theme Toggle, Notifications & Profile Dropdown */}
+          <div className="flex items-center gap-2 sm:gap-3.5">
             
+            {/* Theme Toggle Button (Dark and Light Theme Option) */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-[#64748B] dark:text-amber-400 hover:text-[#1E293B] dark:hover:text-amber-300 hover:bg-[#F8FAFC] dark:hover:bg-white/10 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all duration-200 cursor-pointer group"
+              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label="Toggle dark and light theme"
+            >
+              {isDark ? (
+                /* Sun Icon for Dark Mode */
+                <svg className="w-5 h-5 text-amber-400 group-hover:rotate-45 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                /* Moon Icon for Light Mode */
+                <svg className="w-5 h-5 text-[#64748B] group-hover:text-[#6366F1] group-hover:-rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+
             {/* Notification Bell Button */}
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 rounded-xl text-[#64748B] hover:text-[#1E293B] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                className="relative p-2 rounded-xl text-[#64748B] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white hover:bg-[#F8FAFC] dark:hover:bg-white/10 transition-colors cursor-pointer"
                 title="Notifications"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 {/* Notification Unread Dot */}
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#6366F1] ring-2 ring-white"></span>
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#6366F1] ring-2 ring-white dark:ring-[#15172A]"></span>
               </button>
 
               {/* Notification Popover Modal */}
@@ -257,17 +308,17 @@ const AppLayout = () => {
               <button
                 type="button"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0] transition-all cursor-pointer select-none"
+                className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-white/10 border border-transparent hover:border-[#E2E8F0] dark:hover:border-white/10 transition-all cursor-pointer select-none"
                 title="User Menu"
               >
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-sm border-2 border-white shadow-sm shrink-0">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-sm border-2 border-white dark:border-white/20 shadow-sm shrink-0">
                   <span className="uppercase">{user.name ? user.name.charAt(0) : 'J'}</span>
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-xs font-semibold text-[#1E293B] leading-tight">
+                  <p className="text-xs font-semibold text-[#1E293B] dark:text-slate-100 leading-tight">
                     {user.name || 'John Doe'}
                   </p>
-                  <p className="text-[11px] text-[#64748B]">
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400">
                     {user.role || 'Admin'}
                   </p>
                 </div>
@@ -285,14 +336,14 @@ const AppLayout = () => {
 
               {/* Profile Dropdown Menu (Shows Profile, Change Password, Logout) */}
               {profileDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[0_20px_45px_-10px_rgba(27,25,60,0.18)] border border-slate-200/90 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#1A1C32] rounded-2xl shadow-[0_20px_45px_-10px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-white/10 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {/* User Header Summary */}
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                    <p className="text-xs font-bold text-[#1E293B] truncate">{user.name || 'John Doe'}</p>
-                    <p className="text-[11px] text-[#64748B] truncate">{user.email || 'admin@mini.crm'}</p>
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+                    <p className="text-xs font-bold text-[#1E293B] dark:text-white truncate">{user.name || 'John Doe'}</p>
+                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate">{user.email || 'admin@mini.crm'}</p>
                     <div className="mt-2 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-[#6366F1] bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                      <span className="text-[10px] font-bold text-[#6366F1] bg-indigo-50 dark:bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30">
                         {user.role || 'Admin'}
                       </span>
                     </div>
@@ -308,18 +359,18 @@ const AppLayout = () => {
                         setProfileModalTab('profile');
                         setProfileModalOpen(true);
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F8FAFC] text-left transition-colors cursor-pointer group"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-white/5 text-left transition-colors cursor-pointer group"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-[#6366F1] flex items-center justify-center shrink-0 group-hover:bg-[#6366F1] group-hover:text-white transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/20 text-[#6366F1] dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:bg-[#6366F1] group-hover:text-white transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#1E293B] group-hover:text-[#6366F1] transition-colors">
+                        <p className="text-xs font-semibold text-[#1E293B] dark:text-slate-200 group-hover:text-[#6366F1] dark:group-hover:text-white transition-colors">
                           Profile
                         </p>
-                        <p className="text-[10px] text-[#94A3B8]">
+                        <p className="text-[10px] text-[#94A3B8] dark:text-slate-400">
                           Update personal information
                         </p>
                       </div>
@@ -333,46 +384,42 @@ const AppLayout = () => {
                         setProfileModalTab('security');
                         setProfileModalOpen(true);
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F8FAFC] text-left transition-colors cursor-pointer group"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F8FAFC] dark:hover:bg-white/5 text-left transition-colors cursor-pointer group"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#1E293B] group-hover:text-amber-600 transition-colors">
+                        <p className="text-xs font-semibold text-[#1E293B] dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                           Change Password
                         </p>
-                        <p className="text-[10px] text-[#94A3B8]">
+                        <p className="text-[10px] text-[#94A3B8] dark:text-slate-400">
                           Manage security & credentials
                         </p>
                       </div>
                     </button>
 
                     {/* Divider */}
-                    <div className="my-1 border-t border-slate-100" />
+                    <div className="my-1 border-t border-slate-100 dark:border-white/10" />
 
-                    {/* Option 3: Logout */}
+                    {/* Option 3: Logout with Confirmation Popup */}
                     <button
                       type="button"
-                      onClick={() => {
-                        setProfileDropdownOpen(false);
-                        setProfileModalTab('session');
-                        setProfileModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50/80 text-left transition-colors cursor-pointer group"
+                      onClick={handleLogoutClick}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50/80 dark:hover:bg-red-500/15 text-left transition-colors cursor-pointer group"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 group-hover:bg-red-600 group-hover:text-white transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-red-600">
+                        <p className="text-xs font-semibold text-red-600 dark:text-red-400">
                           Logout
                         </p>
-                        <p className="text-[10px] text-red-400">
+                        <p className="text-[10px] text-red-400 dark:text-red-300">
                           Sign out of your session
                         </p>
                       </div>

@@ -92,12 +92,12 @@ const NotificationModal = ({ isOpen, onClose }) => {
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Popover Card */}
-      <div className="absolute right-0 mt-2 w-[360px] sm:w-[400px] bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(30,27,75,0.2),0_0_1px_1px_rgba(99,102,241,0.08)] border border-[#E2E8F0] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+      <div className="absolute right-0 mt-2 w-[360px] sm:w-[400px] bg-white dark:bg-[#1A1C32] rounded-2xl shadow-[0_20px_50px_-12px_rgba(30,27,75,0.2),0_0_1px_1px_rgba(99,102,241,0.08)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)] border border-[#E2E8F0] dark:border-white/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
         
         {/* Header */}
-        <div className="p-4 px-5 border-b border-[#E2E8F0] flex items-center justify-between bg-gradient-to-r from-white to-slate-50">
+        <div className="p-4 px-5 border-b border-[#E2E8F0] dark:border-white/10 flex items-center justify-between bg-gradient-to-r from-white to-slate-50 dark:from-[#1A1C32] dark:to-[#16182E]">
           <div className="flex items-center gap-2.5">
-            <h3 className="font-bold text-[0.95rem] text-[#1E293B]">
+            <h3 className="font-bold text-[0.95rem] text-[#1E293B] dark:text-white">
               Notifications
             </h3>
             {unreadCount > 0 && (
@@ -111,14 +111,14 @@ const NotificationModal = ({ isOpen, onClose }) => {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5] hover:underline cursor-pointer"
+                className="text-xs font-semibold text-[#6366F1] dark:text-indigo-400 hover:text-[#4F46E5] hover:underline cursor-pointer"
               >
                 Mark all read
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-[#94A3B8] hover:text-[#1E293B] p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -128,13 +128,13 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex border-b border-[#E2E8F0] px-5 bg-slate-50/50">
+        <div className="flex border-b border-[#E2E8F0] dark:border-white/10 px-5 bg-slate-50/50 dark:bg-white/5">
           <button
             onClick={() => setActiveTab('all')}
             className={`py-2.5 text-xs font-semibold border-b-2 mr-5 transition-colors cursor-pointer ${
               activeTab === 'all'
-                ? 'border-[#6366F1] text-[#6366F1]'
-                : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+                ? 'border-[#6366F1] text-[#6366F1] dark:text-indigo-400'
+                : 'border-transparent text-[#64748B] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
             }`}
           >
             All ({notifications.length})
@@ -143,8 +143,8 @@ const NotificationModal = ({ isOpen, onClose }) => {
             onClick={() => setActiveTab('unread')}
             className={`py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === 'unread'
-                ? 'border-[#6366F1] text-[#6366F1]'
-                : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+                ? 'border-[#6366F1] text-[#6366F1] dark:text-indigo-400'
+                : 'border-transparent text-[#64748B] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
             }`}
           >
             Unread ({unreadCount})
@@ -152,9 +152,9 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Notifications List */}
-        <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E2E8F0]/60">
+        <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E2E8F0]/60 dark:divide-white/10">
           {filtered.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#94A3B8]">
+            <div className="p-8 text-center text-xs text-[#94A3B8] dark:text-slate-500">
               No notifications in this view.
             </div>
           ) : (
@@ -162,8 +162,8 @@ const NotificationModal = ({ isOpen, onClose }) => {
               <div
                 key={item.id}
                 onClick={() => toggleRead(item.id)}
-                className={`p-4 flex items-start gap-3.5 hover:bg-[#F8FAFC] transition-colors cursor-pointer ${
-                  !item.read ? 'bg-[#EEF2FF]/40' : ''
+                className={`p-4 flex items-start gap-3.5 hover:bg-[#F8FAFC] dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                  !item.read ? 'bg-[#EEF2FF]/40 dark:bg-indigo-500/10' : ''
                 }`}
               >
                 <div
@@ -174,14 +174,14 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className={`text-xs truncate ${!item.read ? 'font-bold text-[#1E293B]' : 'font-semibold text-[#334155]'}`}>
+                    <p className={`text-xs truncate ${!item.read ? 'font-bold text-[#1E293B] dark:text-white' : 'font-semibold text-[#334155] dark:text-slate-300'}`}>
                       {item.title}
                     </p>
-                    <span className="text-[10px] text-[#94A3B8] shrink-0 font-medium">
+                    <span className="text-[10px] text-[#94A3B8] dark:text-slate-400 shrink-0 font-medium">
                       {item.time}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed line-clamp-2">
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-relaxed line-clamp-2">
                     {item.message}
                   </p>
                 </div>
@@ -196,14 +196,14 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="p-3 px-5 border-t border-[#E2E8F0] flex items-center justify-between bg-slate-50/70">
+          <div className="p-3 px-5 border-t border-[#E2E8F0] dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/5">
             <button
               onClick={clearAll}
-              className="text-[11px] text-[#94A3B8] hover:text-red-500 font-medium transition-colors cursor-pointer"
+              className="text-[11px] text-[#94A3B8] dark:text-slate-400 hover:text-red-500 font-medium transition-colors cursor-pointer"
             >
               Clear all
             </button>
-            <span className="text-[11px] text-[#64748B] font-medium">
+            <span className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
               LeadFlow Notifications
             </span>
           </div>
