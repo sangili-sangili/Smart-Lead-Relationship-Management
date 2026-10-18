@@ -4,6 +4,23 @@ import {
   AVAILABLE_USERS,
   AVAILABLE_COMPANIES
 } from '../../services/leadService';
+import CustomDropdown from '../common/CustomDropdown';
+
+const STATUS_OPTIONS = [
+  { value: 'New', label: 'New', dotColor: '#3B82F6' },
+  { value: 'Contacted', label: 'Contacted', dotColor: '#06B6D4' },
+  { value: 'Qualified', label: 'Qualified', dotColor: '#10B981' },
+  { value: 'Lost', label: 'Lost', dotColor: '#F97316' },
+  { value: 'Converted', label: 'Converted', dotColor: '#8B5CF6' }
+];
+
+const USER_OPTIONS = [
+  ...AVAILABLE_USERS.map((u) => ({ value: u, label: u }))
+];
+
+const COMPANY_OPTIONS = [
+  ...AVAILABLE_COMPANIES.map((c) => ({ value: c, label: c }))
+];
 
 const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
   const isEditing = Boolean(lead);
@@ -165,22 +182,19 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
               )}
             </div>
 
-            {/* Field 2: Status */}
+            {/* Field 2: Status (Searchable CustomDropdown) */}
             <div>
               <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                 Status <span className="text-red-500">*</span>
               </label>
-              <select
+              <CustomDropdown
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all cursor-pointer"
-              >
-                {AVAILABLE_STATUSES.map((st) => (
-                  <option key={st} value={st} className="bg-white dark:bg-[#1A1C32] text-[#1E293B] dark:text-white">
-                    {st}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, status: val })}
+                options={STATUS_OPTIONS}
+                placeholder="Select Status"
+                searchPlaceholder="Search status..."
+                searchable={true}
+              />
             </div>
 
             {/* Field 3: Email */}
@@ -204,22 +218,19 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
               )}
             </div>
 
-            {/* Field 4: Assigned To */}
+            {/* Field 4: Assigned To (Searchable CustomDropdown) */}
             <div>
               <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                 Assigned To
               </label>
-              <select
+              <CustomDropdown
                 value={formData.assignedTo}
-                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all cursor-pointer"
-              >
-                {AVAILABLE_USERS.map((user) => (
-                  <option key={user} value={user} className="bg-white dark:bg-[#1A1C32] text-[#1E293B] dark:text-white">
-                    {user}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, assignedTo: val })}
+                options={USER_OPTIONS}
+                placeholder="Select User"
+                searchPlaceholder="Search user name..."
+                searchable={true}
+              />
             </div>
 
             {/* Field 5: Phone */}
@@ -236,26 +247,19 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
               />
             </div>
 
-            {/* Field 6: Company */}
+            {/* Field 6: Company (Searchable CustomDropdown) */}
             <div>
               <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
                 Company <span className="text-red-500">*</span>
               </label>
-              <select
+              <CustomDropdown
                 value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                className={`w-full h-11 px-3.5 rounded-xl border ${
-                  errors.company
-                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/15'
-                    : 'border-[#E2E8F0] dark:border-white/10 focus:border-[#6366F1] focus:ring-[#6366F1]/15'
-                } bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white focus:outline-none focus:ring-2 transition-all cursor-pointer`}
-              >
-                {AVAILABLE_COMPANIES.map((company) => (
-                  <option key={company} value={company} className="bg-white dark:bg-[#1A1C32] text-[#1E293B] dark:text-white">
-                    {company}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, company: val })}
+                options={COMPANY_OPTIONS}
+                placeholder="Select Company"
+                searchPlaceholder="Search company name..."
+                searchable={true}
+              />
               {errors.company && (
                 <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.company}</p>
               )}

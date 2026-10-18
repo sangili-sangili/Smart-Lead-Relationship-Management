@@ -166,6 +166,8 @@ const AddEditCompanyModal = ({ isOpen, onClose, onSave, company = null }) => {
                 onChange={(val) => setFormData({ ...formData, industry: val })}
                 options={INDUSTRY_OPTIONS}
                 placeholder="Select Industry"
+                searchPlaceholder="Search industry name..."
+                searchable={true}
               />
               {errors.industry && (
                 <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.industry}</p>
