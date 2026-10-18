@@ -1,140 +1,14 @@
 import api from './api';
 
-const STORAGE_KEY = 'leadflow_tasks_data';
-
-export const DEFAULT_TASKS = [
-  {
-    id: 'task-1',
-    title: 'Call with Ravi',
-    leadName: 'Ravi Kumar',
-    dueDate: '2025-04-22',
-    dueDateFormatted: 'Apr 22, 2025',
-    status: 'Pending',
-    assignedTo: 'John Doe',
-    priority: 'High',
-    description: 'Quarterly review call to discuss enterprise cloud expansion requirements.',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-2',
-    title: 'Send proposal',
-    leadName: 'Priya Sharma',
-    dueDate: '2025-04-22',
-    dueDateFormatted: 'Apr 22, 2025',
-    status: 'In Progress',
-    assignedTo: 'Sarah Lee',
-    priority: 'Medium',
-    description: 'Finalize multi-region SaaS architecture scope document and send draft.',
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-3',
-    title: 'Follow up',
-    leadName: 'Suresh Patel',
-    dueDate: '2025-04-23',
-    dueDateFormatted: 'Apr 23, 2025',
-    status: 'Pending',
-    assignedTo: 'Mike Ross',
-    priority: 'Medium',
-    description: 'Verify security compliance sign-off from IT procurement committee.',
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-4',
-    title: 'Demo call',
-    leadName: 'Anita Roy',
-    dueDate: '2025-04-24',
-    dueDateFormatted: 'Apr 24, 2025',
-    status: 'Completed',
-    assignedTo: 'John Doe',
-    priority: 'Low',
-    description: 'Demonstrated automated sales pipeline triggers and workflow reporting.',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-5',
-    title: 'Send quote',
-    leadName: 'Vikram Singh',
-    dueDate: '2025-04-25',
-    dueDateFormatted: 'Apr 25, 2025',
-    status: 'Pending',
-    assignedTo: 'Sarah Lee',
-    priority: 'High',
-    description: 'Prepare custom tiered pricing estimate for 250 enterprise user licenses.',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-6',
-    title: 'Contract review',
-    leadName: 'Sarah Jenkins',
-    dueDate: '2025-04-26',
-    dueDateFormatted: 'Apr 26, 2025',
-    status: 'In Progress',
-    assignedTo: 'Mike Ross',
-    priority: 'High',
-    description: 'Review SLA terms and legal addendums before CEO signature.',
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-7',
-    title: 'Technical discovery',
-    leadName: 'Amit Verma',
-    dueDate: '2025-04-27',
-    dueDateFormatted: 'Apr 27, 2025',
-    status: 'Completed',
-    assignedTo: 'John Doe',
-    priority: 'Medium',
-    description: 'Deep dive session on REST and GraphQL integration endpoints.',
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-    isDeleted: false
-  },
-  {
-    id: 'task-8',
-    title: 'Product trial check-in',
-    leadName: 'Deepa Menon',
-    dueDate: '2025-04-28',
-    dueDateFormatted: 'Apr 28, 2025',
-    status: 'Pending',
-    assignedTo: 'Sarah Lee',
-    priority: 'Low',
-    description: 'Check usage telemetry and collect initial user feedback.',
-    createdAt: new Date().toISOString(),
-    isDeleted: false
-  }
-];
+// Clean up any legacy dummy localStorage cache
+try {
+  localStorage.removeItem('leadflow_tasks_data');
+} catch {}
 
 export const AVAILABLE_TASK_STATUSES = ['Pending', 'In Progress', 'Completed'];
 export const AVAILABLE_PRIORITIES = ['High', 'Medium', 'Low'];
 
-const getStoredTasks = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
-      return DEFAULT_TASKS;
-    }
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('Failed to read tasks from storage', err);
-    return DEFAULT_TASKS;
-  }
-};
-
-const saveStoredTasks = (tasks) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  } catch (err) {
-    console.error('Failed to save tasks to storage', err);
-  }
-};
-
-const formatDateForDisplay = (dateString) => {
+export const formatDateForDisplay = (dateString) => {
   if (!dateString) return 'No due date';
   try {
     const date = new Date(dateString);
@@ -152,153 +26,83 @@ const formatDateForDisplay = (dateString) => {
 export const taskService = {
   /**
    * Fetch paginated tasks with search & filters
+   * Calls live MongoDB endpoint: GET /api/tasks
    */
   async getTasks({ search = '', status = '', user = '', page = 1, limit = 5 } = {}) {
-    try {
-      const response = await api.get('/tasks', {
-        params: { search, status, user, page, limit }
-      });
-      if (response && response.data && response.data.length > 0) {
-        return response;
-      }
-    } catch {
-      // Fallback
-    }
+    const response = await api.get('/tasks', {
+      params: { search, status, user, page, limit }
+    });
 
-    let tasks = getStoredTasks().filter((t) => !t.isDeleted);
-
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      tasks = tasks.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.leadName.toLowerCase().includes(q) ||
-          (t.description && t.description.toLowerCase().includes(q))
-      );
-    }
-
-    if (status && status !== 'All Status') {
-      tasks = tasks.filter((t) => t.status.toLowerCase() === status.toLowerCase());
-    }
-
-    if (user && user !== 'All Users') {
-      tasks = tasks.filter((t) => t.assignedTo.toLowerCase() === user.toLowerCase());
-    }
-
-    const total = tasks.length;
-    const startIndex = (page - 1) * limit;
-    const paginated = tasks.slice(startIndex, startIndex + limit);
+    const rawList = response.data || [];
+    const tasks = rawList.map((t) => ({
+      ...t,
+      id: t._id || t.id,
+      leadName: t.lead?.name || t.leadName || (typeof t.lead === 'string' ? t.lead : 'N/A'),
+      leadId: t.lead?._id || (typeof t.lead === 'object' ? t.lead?._id : t.lead),
+      assignedTo: t.assignedTo?.name || t.assignedTo || 'Unassigned',
+      assignedToId: t.assignedTo?._id || t.assignedTo,
+      dueDateFormatted: formatDateForDisplay(t.dueDate)
+    }));
 
     return {
       success: true,
-      data: paginated,
-      meta: {
-        total,
+      data: tasks,
+      meta: response.meta || {
+        total: tasks.length,
         page,
         limit,
-        totalPages: Math.max(1, Math.ceil(total / limit))
+        totalPages: 1
       }
     };
   },
 
   /**
-   * Create a new task
+   * Create a new task in MongoDB
+   * Calls: POST /api/tasks
    */
   async createTask(taskData) {
-    try {
-      const response = await api.post('/tasks', taskData);
-      if (response && response.data) return response.data;
-    } catch {
-      // Fallback
-    }
-
-    const tasks = getStoredTasks();
-    const newTask = {
-      id: `task-${Date.now()}`,
-      ...taskData,
-      dueDateFormatted: formatDateForDisplay(taskData.dueDate),
-      createdAt: new Date().toISOString(),
-      isDeleted: false
+    const response = await api.post('/tasks', taskData);
+    const data = response.data || response;
+    return {
+      ...data,
+      id: data._id || data.id,
+      leadName: data.lead?.name || data.leadName || 'N/A',
+      assignedTo: data.assignedTo?.name || data.assignedTo || 'Unassigned',
+      dueDateFormatted: formatDateForDisplay(data.dueDate)
     };
-
-    tasks.unshift(newTask);
-    saveStoredTasks(tasks);
-    return newTask;
   },
 
   /**
-   * Update existing task
+   * Update existing task in MongoDB
+   * Calls: PUT /api/tasks/:id
    */
   async updateTask(id, updateData) {
-    try {
-      const response = await api.put(`/tasks/${id}`, updateData);
-      if (response && response.data) return response.data;
-    } catch {
-      // Fallback
-    }
-
-    const tasks = getStoredTasks();
-    const index = tasks.findIndex((t) => t.id === id);
-    if (index === -1) {
-      throw new Error('Task not found');
-    }
-
-    tasks[index] = {
-      ...tasks[index],
-      ...updateData,
-      dueDateFormatted: updateData.dueDate
-        ? formatDateForDisplay(updateData.dueDate)
-        : tasks[index].dueDateFormatted,
-      updatedAt: new Date().toISOString()
+    const response = await api.put(`/tasks/${id}`, updateData);
+    const data = response.data || response;
+    return {
+      ...data,
+      id: data._id || data.id,
+      dueDateFormatted: formatDateForDisplay(data.dueDate)
     };
-
-    saveStoredTasks(tasks);
-    return tasks[index];
   },
 
   /**
-   * Update task status (enforcing assigned user or admin rule)
+   * Update task status (server enforces assignee / admin permissions)
+   * Calls: PATCH /api/tasks/:id/status
    */
-  async updateTaskStatus(id, newStatus, currentUser) {
-    const tasks = getStoredTasks();
-    const task = tasks.find((t) => t.id === id);
-    if (!task) {
-      throw new Error('Task not found');
-    }
-
-    // Authorization rule: Only assigned user or Admin can update task status
-    const isAdmin = currentUser?.role === 'Admin';
-    const isAssignee = currentUser?.name && task.assignedTo.toLowerCase() === currentUser.name.toLowerCase();
-
-    if (!isAdmin && !isAssignee) {
-      throw new Error(`Permission denied: Only ${task.assignedTo} or an Admin can change this task's status.`);
-    }
-
-    try {
-      await api.patch(`/tasks/${id}/status`, { status: newStatus });
-    } catch {
-      // Fallback
-    }
-
-    task.status = newStatus;
-    task.updatedAt = new Date().toISOString();
-    saveStoredTasks(tasks);
-    return task;
+  async updateTaskStatus(id, newStatus) {
+    const response = await api.patch(`/tasks/${id}/status`, { status: newStatus });
+    return response.data || response;
   },
 
   /**
-   * Soft delete task
+   * Soft delete task in MongoDB
+   * Calls: DELETE /api/tasks/:id
    */
   async deleteTask(id) {
-    try {
-      await api.delete(`/tasks/${id}`);
-    } catch {
-      // Fallback
-    }
-
-    const tasks = getStoredTasks();
-    const updated = tasks.map((t) => (t.id === id ? { ...t, isDeleted: true } : t));
-    saveStoredTasks(updated);
-    return { success: true };
+    const response = await api.delete(`/tasks/${id}`);
+    return response;
   }
 };
+
+export default taskService;

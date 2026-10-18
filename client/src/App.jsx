@@ -6,6 +6,7 @@ import AppRoutes from './routes/AppRoutes';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
 import { CustomThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
@@ -14,9 +15,11 @@ function App() {
         <CssBaseline />
         <ToastProvider>
           <ConfirmDialogProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
+            <AuthProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </AuthProvider>
           </ConfirmDialogProvider>
         </ToastProvider>
       </ThemeProvider>

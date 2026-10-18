@@ -3,9 +3,13 @@ import {
   taskService,
   AVAILABLE_TASK_STATUSES
 } from '../services/taskService';
-import { leadService, AVAILABLE_USERS } from '../services/leadService';
+import { leadService } from '../services/leadService';
+import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import AddEditTaskModal from '../components/tasks/AddEditTaskModal';
 import CustomDropdown from '../components/common/CustomDropdown';
+import Pagination from '../components/common/Pagination';
+import useDebounce from '../hooks/useDebounce';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmDialogContext';
 
@@ -16,10 +20,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'Completed', label: 'Completed', dotColor: '#10B981' }
 ];
 
-const USER_FILTER_OPTIONS = [
-  { value: '', label: 'All Users' },
-  ...AVAILABLE_USERS.map((usr) => ({ value: usr, label: usr }))
-];
+const INITIAL_USER_OPTIONS = [{ value: '', label: 'All Users' }];
 
 const getStatusBadgeStyle = (status) => {
   switch (status) {
@@ -35,12 +36,18 @@ const getStatusBadgeStyle = (status) => {
 };
 
 const TasksPage = () => {
+  const { user: authUser } = useAuth();
+  const currentUser = authUser;
+
   const [tasks, setTasks] = useState([]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
+
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [userOptions, setUserOptions] = useState(INITIAL_USER_OPTIONS);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: 5 });
 
@@ -51,21 +58,31 @@ const TasksPage = () => {
   const toast = useToast();
   const confirm = useConfirm();
 
-  const currentUser = useMemo(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem('leadflow_user') || '{"name":"John Doe","role":"Admin"}'
-      );
-    } catch {
-      return { name: 'John Doe', role: 'Admin' };
-    }
+  // Load registered users dynamically
+  useEffect(() => {
+    let isMounted = true;
+    authService.getUsers().then((users) => {
+      if (!isMounted || !users || users.length === 0) return;
+      setUserOptions([
+        { value: '', label: 'All Users' },
+        ...users.map((u) => ({ value: u.name, label: u.name }))
+      ]);
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Reset to page 1 whenever debounced search or active filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, userFilter]);
 
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await taskService.getTasks({
-        search,
+        search: debouncedSearch.trim(),
         status: statusFilter,
         user: userFilter,
         page,
@@ -79,7 +96,7 @@ const TasksPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, userFilter, page, toast]);
+  }, [debouncedSearch, statusFilter, userFilter, page, toast]);
 
   useEffect(() => {
     fetchTasks();
@@ -108,8 +125,7 @@ const TasksPage = () => {
   }, [leads]);
 
   const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
+    setSearchTerm(e.target.value);
   };
 
   const handleStatusFilterChange = (val) => {
@@ -123,7 +139,7 @@ const TasksPage = () => {
   };
 
   const handleClearFilters = () => {
-    setSearch('');
+    setSearchTerm('');
     setStatusFilter('');
     setUserFilter('');
     setPage(1);
@@ -202,7 +218,7 @@ const TasksPage = () => {
     }
   };
 
-  const hasActiveFilters = Boolean(search || statusFilter || userFilter);
+  const hasActiveFilters = Boolean(searchTerm || statusFilter || userFilter);
 
   const startIndex = useMemo(() => {
     if (meta.total === 0) return 0;
@@ -250,14 +266,14 @@ const TasksPage = () => {
           </div>
           <input
             type="text"
-            value={search}
+            value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search tasks by title, lead..."
             className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
           />
-          {search && (
+          {searchTerm && (
             <button
-              onClick={() => { setSearch(''); setPage(1); }}
+              onClick={() => { setSearchTerm(''); setPage(1); }}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +300,7 @@ const TasksPage = () => {
             <CustomDropdown
               value={userFilter}
               onChange={handleUserFilterChange}
-              options={USER_FILTER_OPTIONS}
+              options={userOptions}
               placeholder="All Users"
             />
           </div>
@@ -547,49 +563,12 @@ const TasksPage = () => {
             tasks
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
-              title="Previous Page"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {Array.from({ length: meta.totalPages || 1 }, (_, i) => i + 1).map((pageNum) => {
-              const isActive = pageNum === page;
-              return (
-                <button
-                  key={pageNum}
-                  type="button"
-                  onClick={() => setPage(pageNum)}
-                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-[#6366F1] text-white shadow-xs shadow-indigo-600/30'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage((prev) => Math.min(meta.totalPages, prev + 1))}
-              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
-              title="Next Page"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          {/* Smart Ellipsis Pagination */}
+          <Pagination
+            currentPage={page}
+            totalPages={meta.totalPages || 1}
+            onPageChange={setPage}
+          />
         </div>
 
       </div>

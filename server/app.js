@@ -13,12 +13,33 @@ const app = express();
 // Security HTTP headers
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration supporting dynamic portal & localhost origins
+const allowedOrigins = [
+  CLIENT_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+].filter(Boolean);
+
 const corsOptions = {
-  origin: CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow server-to-server or tools with no origin
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed origins or any localhost/127.0.0.1 port
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS Error: Origin ${origin} not allowed by Access-Control`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 };
 app.use(cors(corsOptions));
 

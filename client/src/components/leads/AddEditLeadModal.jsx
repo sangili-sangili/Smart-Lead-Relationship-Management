@@ -1,26 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  AVAILABLE_STATUSES,
-  AVAILABLE_USERS,
-  AVAILABLE_COMPANIES
-} from '../../services/leadService';
+import { AVAILABLE_STATUSES } from '../../services/leadService';
+import authService from '../../services/authService';
+import companyService from '../../services/companyService';
 import CustomDropdown from '../common/CustomDropdown';
 
-const STATUS_OPTIONS = [
-  { value: 'New', label: 'New', dotColor: '#3B82F6' },
-  { value: 'Contacted', label: 'Contacted', dotColor: '#06B6D4' },
-  { value: 'Qualified', label: 'Qualified', dotColor: '#10B981' },
-  { value: 'Lost', label: 'Lost', dotColor: '#F97316' },
-  { value: 'Converted', label: 'Converted', dotColor: '#8B5CF6' }
-];
-
-const USER_OPTIONS = [
-  ...AVAILABLE_USERS.map((u) => ({ value: u, label: u }))
-];
-
-const COMPANY_OPTIONS = [
-  ...AVAILABLE_COMPANIES.map((c) => ({ value: c, label: c }))
-];
+const STATUS_OPTIONS = AVAILABLE_STATUSES.map((st) => {
+  const dotColors = {
+    New: '#3B82F6',
+    Contacted: '#06B6D4',
+    Qualified: '#10B981',
+    Lost: '#F97316',
+    Converted: '#8B5CF6'
+  };
+  return { value: st, label: st, dotColor: dotColors[st] || '#6366F1' };
+});
 
 const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
   const isEditing = Boolean(lead);
@@ -30,12 +23,52 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
     email: '',
     phone: '',
     status: 'New',
-    assignedTo: 'John Doe',
-    company: 'ABC Corp'
+    assignedTo: '',
+    company: ''
   });
 
+  const [userOptions, setUserOptions] = useState([]);
+  const [companyOptions, setCompanyOptions] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load live users and companies from database
+  useEffect(() => {
+    let isMounted = true;
+    if (isOpen) {
+      Promise.all([
+        authService.getUsers(),
+        companyService.getCompanies({ limit: 100 })
+      ]).then(([users, compRes]) => {
+        if (!isMounted) return;
+        const uOptions = (users || []).map((u) => ({
+          value: u.name,
+          label: `${u.name} (${u.role || 'User'})`
+        }));
+        setUserOptions(uOptions);
+
+        const cOptions = (compRes?.data || []).map((c) => ({
+          value: c.name,
+          label: c.name
+        }));
+        setCompanyOptions(cOptions);
+
+        // If creating new lead and options loaded, set defaults if empty
+        if (!lead) {
+          setFormData((prev) => ({
+            ...prev,
+            assignedTo: prev.assignedTo || (uOptions[0]?.value || ''),
+            company: prev.company || (cOptions[0]?.value || '')
+          }));
+        }
+      }).catch((err) => {
+        console.warn('Failed to load users/companies for lead modal', err);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, lead]);
 
   useEffect(() => {
     if (lead) {
@@ -44,8 +77,8 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
         email: lead.email || '',
         phone: lead.phone || '',
         status: lead.status || 'New',
-        assignedTo: lead.assignedTo || 'John Doe',
-        company: lead.company || 'ABC Corp'
+        assignedTo: lead.assignedTo || '',
+        company: typeof lead.company === 'string' ? lead.company : lead.company?.name || ''
       });
     } else {
       setFormData({
@@ -53,8 +86,8 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
         email: '',
         phone: '',
         status: 'New',
-        assignedTo: 'John Doe',
-        company: 'ABC Corp'
+        assignedTo: '',
+        company: ''
       });
     }
     setErrors({});
@@ -119,183 +152,181 @@ const AddEditLeadModal = ({ isOpen, onClose, onSave, lead = null }) => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6366F1] to-[#818CF8] flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
               {isEditing ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               ) : (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                 </svg>
               )}
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-[#1E293B] dark:text-white tracking-tight">
-                {isEditing ? 'Edit Lead' : 'Add Lead'}
+                {isEditing ? 'Edit Lead' : 'Add New Lead'}
               </h2>
-              <p className="text-xs text-[#64748B] dark:text-slate-400">
+              <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
                 {isEditing
-                  ? 'Update pipeline prospect details and assign owners'
-                  : 'Enter information to capture a new sales lead'}
+                  ? 'Update customer details and pipeline stage'
+                  : 'Capture a new prospective customer in your CRM'}
               </p>
             </div>
           </div>
 
-          {/* Close button */}
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-[#64748B] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-            title="Close modal"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close modal"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 sm:space-y-5">
-          {errors.form && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-medium">
-              {errors.form}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="p-6 px-7 sm:px-8 space-y-4 max-h-[70vh] overflow-y-auto">
+            {errors.form && (
+              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs">
+                {errors.form}
+              </div>
+            )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            {/* Field 1: Name */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter full name"
-                className={`w-full h-11 px-3.5 rounded-xl border ${
-                  errors.name
-                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/15'
-                    : 'border-[#E2E8F0] dark:border-white/10 focus:border-[#6366F1] focus:ring-[#6366F1]/15'
-                } bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 transition-all`}
-              />
-              {errors.name && (
-                <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.name}</p>
-              )}
-            </div>
+            {/* Row 1: Name and Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rahul Sharma"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={`w-full h-11 px-3.5 rounded-xl border ${
+                    errors.name
+                      ? 'border-red-400 bg-red-50/30'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5'
+                  } text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all`}
+                />
+                {errors.name && (
+                  <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>
+                )}
+              </div>
 
-            {/* Field 2: Status (Searchable CustomDropdown) */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Status <span className="text-red-500">*</span>
-              </label>
-              <CustomDropdown
-                value={formData.status}
-                onChange={(val) => setFormData({ ...formData, status: val })}
-                options={STATUS_OPTIONS}
-                placeholder="Select Status"
-                searchPlaceholder="Search status..."
-                searchable={true}
-              />
-            </div>
-
-            {/* Field 3: Email */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter email address"
-                className={`w-full h-11 px-3.5 rounded-xl border ${
-                  errors.email
-                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/15'
-                    : 'border-[#E2E8F0] dark:border-white/10 focus:border-[#6366F1] focus:ring-[#6366F1]/15'
-                } bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:ring-2 transition-all`}
-              />
-              {errors.email && (
-                <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.email}</p>
-              )}
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. rahul@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className={`w-full h-11 px-3.5 rounded-xl border ${
+                    errors.email
+                      ? 'border-red-400 bg-red-50/30'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5'
+                  } text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all`}
+                />
+                {errors.email && (
+                  <p className="text-[11px] text-red-500 mt-1">{errors.email}</p>
+                )}
+              </div>
             </div>
 
-            {/* Field 4: Assigned To (Searchable CustomDropdown) */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Assigned To
-              </label>
-              <CustomDropdown
-                value={formData.assignedTo}
-                onChange={(val) => setFormData({ ...formData, assignedTo: val })}
-                options={USER_OPTIONS}
-                placeholder="Select User"
-                searchPlaceholder="Search user name..."
-                searchable={true}
-              />
+            {/* Row 2: Phone and Company */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. +91 98765 43210"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Company <span className="text-red-500">*</span>
+                </label>
+                {companyOptions.length > 0 ? (
+                  <CustomDropdown
+                    value={formData.company}
+                    onChange={(val) => setFormData({ ...formData, company: val })}
+                    options={companyOptions}
+                    placeholder="Select company"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Company name"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+                  />
+                )}
+                {errors.company && (
+                  <p className="text-[11px] text-red-500 mt-1">{errors.company}</p>
+                )}
+              </div>
             </div>
 
-            {/* Field 5: Phone */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Phone
-              </label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Enter phone number"
-                className="w-full h-11 px-3.5 rounded-xl border border-[#E2E8F0] dark:border-white/10 bg-white dark:bg-[#1A1C32] text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
-              />
-            </div>
+            {/* Row 3: Status and Assigned User */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Pipeline Status
+                </label>
+                <CustomDropdown
+                  value={formData.status}
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  options={STATUS_OPTIONS}
+                  placeholder="Select status"
+                />
+              </div>
 
-            {/* Field 6: Company (Searchable CustomDropdown) */}
-            <div>
-              <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
-                Company <span className="text-red-500">*</span>
-              </label>
-              <CustomDropdown
-                value={formData.company}
-                onChange={(val) => setFormData({ ...formData, company: val })}
-                options={COMPANY_OPTIONS}
-                placeholder="Select Company"
-                searchPlaceholder="Search company name..."
-                searchable={true}
-              />
-              {errors.company && (
-                <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.company}</p>
-              )}
+              <div>
+                <label className="block text-xs font-semibold text-[#1E293B] dark:text-slate-200 mb-1.5">
+                  Assigned Team Member
+                </label>
+                <CustomDropdown
+                  value={formData.assignedTo}
+                  onChange={(val) => setFormData({ ...formData, assignedTo: val })}
+                  options={userOptions}
+                  placeholder="Select assignee"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-white/10">
+          {/* Modal Footer Actions */}
+          <div className="p-4 px-7 sm:px-8 border-t border-[#E2E8F0] dark:border-[#222543] flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-white/5">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-5 h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs sm:text-sm font-semibold text-[#475569] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs sm:text-sm font-semibold text-[#475569] dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 h-11 rounded-xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:opacity-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:opacity-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Saving...</span>
                 </>
               ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Save</span>
-                </>
+                <span>{isEditing ? 'Save Changes' : 'Create Lead'}</span>
               )}
             </button>
           </div>

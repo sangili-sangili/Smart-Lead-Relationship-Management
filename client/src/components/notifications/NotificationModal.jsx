@@ -1,89 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import notificationService from '../../services/notificationService';
 
-const initialNotifications = [
-  {
-    id: 1,
-    title: 'New Lead Assigned',
-    message: 'Ravi Kumar from ABC Corp has been assigned to you.',
-    time: '10m ago',
-    read: false,
-    type: 'lead',
-    iconBg: 'bg-indigo-50 text-[#6366F1]',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-      </svg>
-    )
-  },
-  {
-    id: 2,
-    title: 'Task Due in 1 Hour',
-    message: 'Call with ABC Corp scheduled for today at 10:00 AM.',
-    time: '45m ago',
-    read: false,
-    type: 'task',
-    iconBg: 'bg-amber-50 text-amber-600',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )
-  },
-  {
-    id: 3,
-    title: 'Status Updated to Qualified',
-    message: 'Priya Sharma was marked as Qualified by Sarah Lee.',
-    time: '2h ago',
-    read: true,
-    type: 'status',
-    iconBg: 'bg-emerald-50 text-emerald-600',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )
-  },
-  {
-    id: 4,
-    title: 'Pipeline Milestone Reached',
-    message: 'Team achieved +12% lead conversion rate this week!',
-    time: '1d ago',
-    read: true,
-    type: 'milestone',
-    iconBg: 'bg-purple-50 text-purple-600',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-    )
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'task':
+      return {
+        bg: 'bg-amber-50 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )
+      };
+    case 'company':
+      return {
+        bg: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        )
+      };
+    case 'lead':
+    default:
+      return {
+        bg: 'bg-indigo-50 text-[#6366F1] dark:bg-indigo-500/20 dark:text-indigo-400',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        )
+      };
   }
-];
+};
 
 const NotificationModal = ({ isOpen, onClose }) => {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { notifications: list } = await notificationService.getNotifications({ limit: 30 });
+      setNotifications(list);
+    } catch (err) {
+      console.warn('Failed to fetch notifications', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen, fetchNotifications]);
 
   if (!isOpen) return null;
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read && !n.isRead).length;
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true, isRead: true })));
+    await notificationService.markAllAsRead();
   };
 
-  const toggleRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
-    );
+  const handleToggleRead = async (item) => {
+    const isCurrentlyRead = item.read || item.isRead;
+    if (!isCurrentlyRead) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, read: true, isRead: true } : n))
+      );
+      await notificationService.markAsRead(item.id);
+    }
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
     setNotifications([]);
+    await notificationService.clearAll();
   };
 
   const filtered =
     activeTab === 'unread'
-      ? notifications.filter((n) => !n.read)
+      ? notifications.filter((n) => !n.read && !n.isRead)
       : notifications;
 
   return (
@@ -153,61 +153,70 @@ const NotificationModal = ({ isOpen, onClose }) => {
 
         {/* Notifications List */}
         <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E2E8F0]/60 dark:divide-white/10">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-xs text-[#94A3B8] dark:text-slate-500 flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
+              <span>Loading notifications...</span>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-xs text-[#94A3B8] dark:text-slate-500">
               No notifications in this view.
             </div>
           ) : (
-            filtered.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => toggleRead(item.id)}
-                className={`p-4 flex items-start gap-3.5 hover:bg-[#F8FAFC] dark:hover:bg-white/5 transition-colors cursor-pointer ${
-                  !item.read ? 'bg-[#EEF2FF]/40 dark:bg-indigo-500/10' : ''
-                }`}
-              >
+            filtered.map((item) => {
+              const iconStyle = getNotificationIcon(item.type || item.entityType);
+              const isUnread = !item.read && !item.isRead;
+              return (
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.iconBg}`}
+                  key={item.id}
+                  onClick={() => handleToggleRead(item)}
+                  className={`p-4 flex items-start gap-3.5 hover:bg-[#F8FAFC] dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                    isUnread ? 'bg-[#EEF2FF]/40 dark:bg-indigo-500/10' : ''
+                  }`}
                 >
-                  {item.icon}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className={`text-xs truncate ${!item.read ? 'font-bold text-[#1E293B] dark:text-white' : 'font-semibold text-[#334155] dark:text-slate-300'}`}>
-                      {item.title}
-                    </p>
-                    <span className="text-[10px] text-[#94A3B8] dark:text-slate-400 shrink-0 font-medium">
-                      {item.time}
-                    </span>
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconStyle.bg}`}
+                  >
+                    {iconStyle.icon}
                   </div>
-                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-relaxed line-clamp-2">
-                    {item.message}
-                  </p>
-                </div>
 
-                {!item.read && (
-                  <span className="w-2 h-2 rounded-full bg-[#6366F1] shrink-0 mt-1.5" />
-                )}
-              </div>
-            ))
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className={`text-xs truncate ${isUnread ? 'font-bold text-[#1E293B] dark:text-white' : 'font-semibold text-[#334155] dark:text-slate-300'}`}>
+                        {item.title}
+                      </p>
+                      <span className="text-[10px] text-[#94A3B8] dark:text-slate-400 shrink-0 font-medium">
+                        {item.time || 'recently'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#64748B] dark:text-slate-400 line-clamp-2 leading-relaxed">
+                      {item.message}
+                    </p>
+                  </div>
+
+                  {isUnread && (
+                    <span className="w-2 h-2 rounded-full bg-[#6366F1] mt-2 shrink-0" />
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
 
         {/* Footer */}
-        {notifications.length > 0 && (
-          <div className="p-3 px-5 border-t border-[#E2E8F0] dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/5">
+        <div className="p-3 px-5 border-t border-[#E2E8F0] dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-between">
+          <span className="text-[11px] text-[#94A3B8] dark:text-slate-400 font-medium">
+            LeadFlow CRM Audit Logs
+          </span>
+          {notifications.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-[11px] text-[#94A3B8] dark:text-slate-400 hover:text-red-500 font-medium transition-colors cursor-pointer"
+              className="text-[11px] font-semibold text-[#64748B] dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
             >
               Clear all
             </button>
-            <span className="text-[11px] text-[#64748B] dark:text-slate-400 font-medium">
-              LeadFlow Notifications
-            </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );

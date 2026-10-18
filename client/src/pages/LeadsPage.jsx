@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   leadService,
-  AVAILABLE_STATUSES,
-  AVAILABLE_USERS
+  AVAILABLE_STATUSES
 } from '../services/leadService';
+import authService from '../services/authService';
 import AddEditLeadModal from '../components/leads/AddEditLeadModal';
 import CustomDropdown from '../components/common/CustomDropdown';
+import Pagination from '../components/common/Pagination';
+import useDebounce from '../hooks/useDebounce';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmDialogContext';
 
@@ -18,10 +20,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'Converted', label: 'Converted', dotColor: '#8B5CF6' }
 ];
 
-const USER_FILTER_OPTIONS = [
-  { value: '', label: 'All Users' },
-  ...AVAILABLE_USERS.map((usr) => ({ value: usr, label: usr }))
-];
+const INITIAL_USER_OPTIONS = [{ value: '', label: 'All Users' }];
 
 // Figma Status Pill Styling
 const getStatusBadgeStyle = (status) => {
@@ -58,24 +57,47 @@ const getAvatarGradient = (name = '') => {
 const LeadsPage = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
+
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [userOptions, setUserOptions] = useState(INITIAL_USER_OPTIONS);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: 5 });
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
 
+  // Load registered users from backend for filter
+  useEffect(() => {
+    let isMounted = true;
+    authService.getUsers().then((users) => {
+      if (!isMounted || !users || users.length === 0) return;
+      setUserOptions([
+        { value: '', label: 'All Users' },
+        ...users.map((u) => ({ value: u.name, label: u.name }))
+      ]);
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const toast = useToast();
   const confirm = useConfirm();
+
+  // Reset to page 1 whenever debounced search or active filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, userFilter]);
 
   const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       const res = await leadService.getLeads({
-        search,
+        search: debouncedSearch.trim(),
         status: statusFilter,
         user: userFilter,
         page,
@@ -89,16 +111,15 @@ const LeadsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, userFilter, page, toast]);
+  }, [debouncedSearch, statusFilter, userFilter, page, toast]);
 
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
 
-  // Reset to page 1 on search or filter change
+  // Instant input state update for typing responsiveness without API spam
   const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
+    setSearchTerm(e.target.value);
   };
 
   const handleStatusChange = (e) => {
@@ -112,7 +133,7 @@ const LeadsPage = () => {
   };
 
   const handleClearFilters = () => {
-    setSearch('');
+    setSearchTerm('');
     setStatusFilter('');
     setUserFilter('');
     setPage(1);
@@ -161,7 +182,7 @@ const LeadsPage = () => {
     }
   };
 
-  const hasActiveFilters = Boolean(search || statusFilter || userFilter);
+  const hasActiveFilters = Boolean(searchTerm || statusFilter || userFilter);
 
   // Pagination bounds calculation
   const startIndex = useMemo(() => {
@@ -211,14 +232,14 @@ const LeadsPage = () => {
           </div>
           <input
             type="text"
-            value={search}
+            value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search leads by name, email..."
             className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
           />
-          {search && (
+          {searchTerm && (
             <button
-              onClick={() => { setSearch(''); setPage(1); }}
+              onClick={() => { setSearchTerm(''); setPage(1); }}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,7 +272,7 @@ const LeadsPage = () => {
                 setUserFilter(val);
                 setPage(1);
               }}
-              options={USER_FILTER_OPTIONS}
+              options={userOptions}
               placeholder="All Users"
             />
           </div>
@@ -533,53 +554,12 @@ const LeadsPage = () => {
             leads
           </div>
 
-          {/* Figma Style Pagination Buttons */}
-          <div className="flex items-center gap-1.5">
-            {/* Previous Page Button */}
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
-              title="Previous Page"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {/* Page Number Pills */}
-            {Array.from({ length: meta.totalPages || 1 }, (_, i) => i + 1).map((pageNum) => {
-              const isActive = pageNum === page;
-              return (
-                <button
-                  key={pageNum}
-                  type="button"
-                  onClick={() => setPage(pageNum)}
-                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-[#6366F1] text-white shadow-xs shadow-indigo-600/30'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-
-            {/* Next Page Button */}
-            <button
-              type="button"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage((prev) => Math.min(meta.totalPages, prev + 1))}
-              className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-[#64748B] dark:text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
-              title="Next Page"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+          {/* Smart Ellipsis Pagination matching requested 1 2 3 4 ... 10 11 format */}
+          <Pagination
+            currentPage={page}
+            totalPages={meta.totalPages || 1}
+            onPageChange={setPage}
+          />
         </div>
 
       </div>

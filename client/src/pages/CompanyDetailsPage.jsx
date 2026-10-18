@@ -246,7 +246,9 @@ const CompanyDetailsPage = () => {
                   </span>
 
                   <span className="hidden sm:inline text-xs text-[#94A3B8] dark:text-slate-400">
-                    {lead.assignedTo}
+                    {typeof lead.assignedTo === 'object' && lead.assignedTo !== null
+                      ? lead.assignedTo.name
+                      : lead.assignedTo || 'Unassigned'}
                   </span>
                 </div>
               </div>

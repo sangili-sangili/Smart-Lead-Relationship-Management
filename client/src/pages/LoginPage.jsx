@@ -1,21 +1,53 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import Logo from '../components/common/Logo';
 import figmaIllustration from '../assets/figma-illustration.jpg';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Admin (John)', email: 'admin@mini.crm', role: 'Admin' },
+  { label: 'Sales Rep (Sarah)', email: 'sarah.lee@mini.crm', role: 'Sales Rep' },
+  { label: 'Sales Rep (Mike)', email: 'mike.ross@mini.crm', role: 'Sales Rep' }
+];
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('you@company.com');
-  const [password, setPassword] = useState('');
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+  const toast = useToast();
+
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem('leadflow_remember_email') || 'admin@mini.crm';
+  });
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return Boolean(localStorage.getItem('leadflow_remember_email'));
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  // Target path to navigate after successful login
+  const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
+
+  // If already authenticated, redirect straight to dashboard or previous route
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
+  const fillDemoCredentials = (demoEmail) => {
+    setEmail(demoEmail);
+    setPassword('password123');
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setError('Please provide both email and password.');
       return;
     }
@@ -23,21 +55,39 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      localStorage.setItem('leadflow_token', 'mock_jwt_token_for_phase2');
-      localStorage.setItem(
-        'leadflow_user',
-        JSON.stringify({ name: 'John Doe', email, role: 'Admin' })
+    try {
+      const user = await login(email.trim(), password);
+
+      // Manage remember me
+      if (rememberMe) {
+        localStorage.setItem('leadflow_remember_email', email.trim());
+      } else {
+        localStorage.removeItem('leadflow_remember_email');
+      }
+
+      toast.success(
+        `Welcome back, ${user.name}!`,
+        `Signed in successfully as ${user.role}.`
       );
+
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMsg =
+        err.message ||
+        (err.status === 401
+          ? 'Invalid email or password. Please verify your credentials.'
+          : 'Unable to connect to the authentication service. Please try again.');
+      setError(errorMsg);
+    } finally {
       setLoading(false);
-      navigate(ROUTES.DASHBOARD);
-    }, 500);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#EFF2FE] p-4 sm:p-6 lg:p-8 font-['Inter',sans-serif]">
       {/* Main Container Card */}
-      <div className="flex flex-col md:flex-row max-w-[960px] w-full min-h-[570px] bg-white rounded-[28px] overflow-hidden shadow-[0_25px_60px_-15px_rgba(27,25,60,0.12),0_0_1px_1px_rgba(99,102,241,0.06)] border border-[#E2E8F0]/70">
+      <div className="flex flex-col md:flex-row max-w-[980px] w-full min-h-[580px] bg-white rounded-[28px] overflow-hidden shadow-[0_25px_60px_-15px_rgba(27,25,60,0.12),0_0_1px_1px_rgba(99,102,241,0.06)] border border-[#E2E8F0]/70">
         
         {/* Left Hero / Brand & 3D Illustration Panel */}
         <div className="w-full md:w-[46%] bg-[#1A1C32] bg-gradient-to-b from-[#1F213D] via-[#1A1C32] to-[#141528] text-white pt-8 sm:pt-10 px-8 sm:px-10 pb-0 flex flex-col justify-between relative overflow-hidden">
@@ -79,24 +129,50 @@ const LoginPage = () => {
 
         {/* Right Form Card */}
         <div className="flex-1 flex flex-col justify-center p-8 sm:p-12 md:p-14 bg-white">
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="font-bold text-2xl sm:text-[1.75rem] text-[#1E293B] tracking-[-0.5px] mb-1.5">
               Welcome Back
             </h2>
             <p className="text-[0.88rem] text-[#64748B]">
-              Sign in to your Mini CRM account
+              Sign in to your LeadFlow CRM account
             </p>
           </div>
 
+          {/* Quick Demo Switchers */}
+          <div className="mb-5 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div className="text-[0.72rem] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              Quick Fill Demo Account
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => fillDemoCredentials(acc.email)}
+                  className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
+                    email === acc.email
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  {acc.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && (
-            <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
-              {error}
+            <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm flex items-start gap-2.5">
+              <svg className="w-5 h-5 shrink-0 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
             {/* Email Address */}
-            <div className="mb-5">
+            <div className="mb-4">
               <label
                 htmlFor="login-email"
                 className="block font-semibold text-[0.825rem] text-[#1E293B] mb-2"
@@ -117,7 +193,7 @@ const LoginPage = () => {
                 <input
                   id="login-email"
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="admin@mini.crm"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -192,7 +268,7 @@ const LoginPage = () => {
             </div>
 
             {/* Options Row: Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between mt-3.5 mb-7">
+            <div className="flex items-center justify-between mt-3 mb-6">
               <label className="flex items-center gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -205,12 +281,12 @@ const LoginPage = () => {
                 </span>
               </label>
 
-              <a
-                href="#"
-                className="text-[0.84rem] font-semibold text-[#5046E5] hover:text-[#4338CA] hover:underline transition-colors"
+              <span
+                className="text-[0.84rem] font-semibold text-[#5046E5] hover:text-[#4338CA] transition-colors cursor-pointer"
+                onClick={() => toast.info('Default Passwords', 'All demo seed accounts have password: "password123"')}
               >
                 Forgot password?
-              </a>
+              </span>
             </div>
 
             {/* Submit Button */}
@@ -220,22 +296,22 @@ const LoginPage = () => {
               className="w-full h-[48px] rounded-[12px] bg-[#5046E5] hover:bg-[#4338CA] active:translate-y-0 text-white font-semibold text-[0.95rem] shadow-[0_10px_22px_-3px_rgba(80,70,229,0.38)] hover:shadow-[0_12px_26px_-3px_rgba(80,70,229,0.48)] hover:-translate-y-0.5 transition-all flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                'Login'
+                'Login to LeadFlow'
               )}
             </button>
           </form>
 
           {/* Footer Note */}
           <div className="mt-7 text-center text-[0.84rem] text-[#64748B]">
-            Don't have an account?{' '}
-            <a
-              href="#"
+            Need access or forgot account details?{' '}
+            <span
+              onClick={() => toast.info('Administrator Support', 'Contact system admin at admin@leadflow.com for account provisioning.')}
               className="font-semibold text-[#5046E5] hover:text-[#4338CA] hover:underline transition-colors cursor-pointer"
             >
               Contact admin
-            </a>
+            </span>
           </div>
         </div>
       </div>

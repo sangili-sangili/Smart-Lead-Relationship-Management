@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmDialogContext';
+import dashboardService from '../services/dashboardService';
+import { taskService } from '../services/taskService';
 
 const stats = [
   {
     id: 'total_leads',
     label: 'Total Leads',
-    value: '120',
-    trend: '12%',
+    value: '0',
+    trend: '0%',
     gradient: 'from-indigo-50/90 via-white to-purple-50/70',
     borderColor: 'border-indigo-100/90 hover:border-indigo-300/80',
     shadowColor: 'hover:shadow-[0_20px_35px_-10px_rgba(99,102,241,0.22)]',
@@ -27,8 +29,8 @@ const stats = [
   {
     id: 'qualified_leads',
     label: 'Qualified Leads',
-    value: '45',
-    trend: '8%',
+    value: '0',
+    trend: '0%',
     gradient: 'from-emerald-50/90 via-white to-teal-50/70',
     borderColor: 'border-emerald-100/90 hover:border-emerald-300/80',
     shadowColor: 'hover:shadow-[0_20px_35px_-10px_rgba(16,185,129,0.22)]',
@@ -46,8 +48,8 @@ const stats = [
   {
     id: 'tasks_due',
     label: 'Tasks Due Today',
-    value: '8',
-    trend: '2%',
+    value: '0',
+    trend: '0%',
     gradient: 'from-amber-50/90 via-white to-orange-50/70',
     borderColor: 'border-amber-100/90 hover:border-amber-300/80',
     shadowColor: 'hover:shadow-[0_20px_35px_-10px_rgba(245,158,11,0.22)]',
@@ -65,8 +67,8 @@ const stats = [
   {
     id: 'completed_tasks',
     label: 'Completed Tasks',
-    value: '30',
-    trend: '15%',
+    value: '0',
+    trend: '0%',
     gradient: 'from-blue-50/90 via-white to-sky-50/70',
     borderColor: 'border-blue-100/90 hover:border-blue-300/80',
     shadowColor: 'hover:shadow-[0_20px_35px_-10px_rgba(59,130,246,0.22)]',
@@ -84,115 +86,132 @@ const stats = [
 ];
 
 // Leads by Status configuration
-// Circumference = 2 * Math.PI * 44 = 276.46
-// Proportional distribution across 105 leads (normalized to 276.46 circumference)
 const statusData = [
   {
     label: 'New',
-    count: 32,
-    percentage: '27%',
+    count: 0,
+    percentage: '0%',
     color: '#3B82F6',
-    dashLength: 84.25,
+    dashLength: 0,
     dashOffset: 0,
     lightBg: 'bg-blue-50 text-blue-700'
   },
   {
     label: 'Contacted',
-    count: 28,
-    percentage: '23%',
+    count: 0,
+    percentage: '0%',
     color: '#06B6D4',
-    dashLength: 73.72,
-    dashOffset: -84.25,
+    dashLength: 0,
+    dashOffset: 0,
     lightBg: 'bg-cyan-50 text-cyan-700'
   },
   {
     label: 'Qualified',
-    count: 25,
-    percentage: '21%',
+    count: 0,
+    percentage: '0%',
     color: '#10B981',
-    dashLength: 65.82,
-    dashOffset: -157.97,
+    dashLength: 0,
+    dashOffset: 0,
     lightBg: 'bg-emerald-50 text-emerald-700'
   },
   {
     label: 'Lost',
-    count: 12,
-    percentage: '10%',
+    count: 0,
+    percentage: '0%',
     color: '#F97316',
-    dashLength: 31.60,
-    dashOffset: -223.79,
+    dashLength: 0,
+    dashOffset: 0,
     lightBg: 'bg-orange-50 text-orange-700'
   },
   {
     label: 'Converted',
-    count: 8,
-    percentage: '7%',
+    count: 0,
+    percentage: '0%',
     color: '#8B5CF6',
-    dashLength: 21.07,
-    dashOffset: -255.39,
+    dashLength: 0,
+    dashOffset: 0,
     lightBg: 'bg-purple-50 text-purple-700'
   }
 ];
 
-const upcomingTasks = [
-  {
-    id: 1,
-    title: 'Call with ABC Corp',
-    time: 'Today, 10:00 AM',
-    priority: 'High',
-    badgeClass: 'bg-red-50 text-red-600 border border-red-200/80',
-    iconBg: 'bg-red-50 text-red-500',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-      </svg>
-    )
-  },
-  {
-    id: 2,
-    title: 'Send proposal to Acme Corp',
-    time: 'Today, 2:00 PM',
-    priority: 'Medium',
-    badgeClass: 'bg-amber-50 text-amber-600 border border-amber-200/80',
-    iconBg: 'bg-purple-50 text-purple-600',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
-    )
-  },
-  {
-    id: 3,
-    title: 'Follow up with Priya',
-    time: 'Tomorrow, 11:00 AM',
-    priority: 'Medium',
-    badgeClass: 'bg-amber-50 text-amber-600 border border-amber-200/80',
-    iconBg: 'bg-cyan-50 text-cyan-600',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-      </svg>
-    )
-  },
-  {
-    id: 4,
-    title: 'Demo for Globex',
-    time: 'Tomorrow, 4:00 PM',
-    priority: 'Low',
-    badgeClass: 'bg-slate-100 text-slate-600 border border-slate-200/90',
-    iconBg: 'bg-orange-50 text-orange-500',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    )
-  }
-];
+const upcomingTasks = [];
 
 const DashboardPage = () => {
   const [hoveredStatus, setHoveredStatus] = useState(null);
+  const [liveStats, setLiveStats] = useState(stats);
+  const [liveStatusData, setLiveStatusData] = useState(statusData);
+  const [liveTasks, setLiveTasks] = useState(upcomingTasks);
+  const [totalLeadsCount, setTotalLeadsCount] = useState(0);
+  const [dataUpdatedTime, setDataUpdatedTime] = useState('Syncing with database...');
   const toast = useToast();
   const confirm = useConfirm();
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const data = await dashboardService.getMetrics();
+      if (!data) return;
+      const { summary, statusCounts, upcomingTasks: tasks } = data;
+      if (summary) {
+        setLiveStats([
+          { ...stats[0], value: String(summary.totalLeads ?? 0) },
+          { ...stats[1], value: String(summary.qualifiedLeads ?? 0) },
+          { ...stats[2], value: String(summary.tasksDueToday ?? 0) },
+          { ...stats[3], value: String(summary.completedTasks ?? 0) }
+        ]);
+        setTotalLeadsCount(summary.totalLeads ?? 0);
+      }
+      if (statusCounts) {
+        const total = summary?.totalLeads || 1;
+        const circumference = 2 * Math.PI * 44; // 276.46
+        let currentOffset = 0;
+        const newStatusData = statusData.map((s) => {
+          const count = statusCounts[s.label] || 0;
+          const fraction = total > 0 ? count / total : 0;
+          const percentage = `${Math.round(fraction * 100)}%`;
+          const dashLength = parseFloat((fraction * circumference).toFixed(2));
+          const dashOffset = parseFloat((-currentOffset).toFixed(2));
+          currentOffset += dashLength;
+          return {
+            ...s,
+            count,
+            percentage,
+            dashLength,
+            dashOffset
+          };
+        });
+        setLiveStatusData(newStatusData);
+      }
+      if (tasks && tasks.length > 0) {
+        setLiveTasks(
+          tasks.map((t, idx) => ({
+            id: t._id || t.id || idx,
+            title: t.title,
+            time: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today',
+            priority: t.priority || 'Medium',
+            badgeClass:
+              t.priority === 'High'
+                ? 'bg-red-50 text-red-600 border border-red-200/80'
+                : 'bg-amber-50 text-amber-600 border border-amber-200/80',
+            iconBg: 'bg-indigo-50 text-[#6366F1]',
+            icon: (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )
+          }))
+        );
+      } else {
+        setLiveTasks([]);
+      }
+      setDataUpdatedTime('Live database sync');
+    } catch (err) {
+      console.warn('Failed to refresh dashboard metrics', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   const handleTaskClick = async (task) => {
     const ok = await confirm({
@@ -206,7 +225,13 @@ const DashboardPage = () => {
     });
 
     if (ok) {
-      toast.success('Task Completed!', `"${task.title}" has been moved to completed status.`);
+      try {
+        await taskService.updateTaskStatus(task.id, 'Completed');
+        toast.success('Task Completed!', `"${task.title}" has been moved to completed status.`);
+        fetchMetrics();
+      } catch (err) {
+        toast.error('Update Failed', err.message || 'Could not update task.');
+      }
     }
   };
 
@@ -226,13 +251,13 @@ const DashboardPage = () => {
         {/* Quick Date & Refresh Indicator */}
         <div className="hidden sm:flex items-center gap-2 text-xs text-[#64748B] dark:text-slate-400 bg-white/70 dark:bg-white/5 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-slate-200/60 dark:border-white/10 shadow-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Data updated just now</span>
+          <span>{dataUpdatedTime}</span>
         </div>
       </div>
 
       {/* Top 4 KPI Summary Cards with Gradient, Multiple Circles & Hover Lift */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((stat, i) => (
+        {liveStats.map((stat, i) => (
           <div
             key={stat.id}
             onClick={() => toast.info(stat.label, `Viewing detailed pipeline analytics for ${stat.value} items.`)}
@@ -304,7 +329,7 @@ const DashboardPage = () => {
                 Leads by Status
               </h2>
               <p className="text-xs text-[#94A3B8] dark:text-slate-400 mt-0.5">
-                Distribution across 120 active pipeline leads
+                Distribution across {totalLeadsCount} active pipeline leads
               </p>
             </div>
             <div className="text-xs font-medium text-[#64748B] dark:text-slate-300 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/10 flex items-center gap-1.5">
@@ -338,7 +363,7 @@ const DashboardPage = () => {
                 />
 
                 {/* Render status segments */}
-                {statusData.map((item) => {
+                {liveStatusData.map((item) => {
                   const isHovered = hoveredStatus?.label === item.label;
                   return (
                     <circle
@@ -365,7 +390,7 @@ const DashboardPage = () => {
               {/* Central Donut Typography Display */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
                 <span className="text-4xl sm:text-[2.75rem] font-black text-[#1E293B] dark:text-white leading-none mb-1 tracking-tight">
-                  {hoveredStatus ? hoveredStatus.count : '120'}
+                  {hoveredStatus ? hoveredStatus.count : totalLeadsCount}
                 </span>
                 <span className="text-xs sm:text-[0.825rem] font-semibold text-[#64748B] dark:text-slate-400 tracking-wide">
                   {hoveredStatus ? hoveredStatus.label : 'Total Leads'}
@@ -380,7 +405,7 @@ const DashboardPage = () => {
 
             {/* Legend Breakdown with Interactive Hover */}
             <div className="w-full sm:w-auto flex-1 space-y-2.5">
-              {statusData.map((item) => {
+              {liveStatusData.map((item) => {
                 const isHovered = hoveredStatus?.label === item.label;
                 return (
                   <div
@@ -456,7 +481,12 @@ const DashboardPage = () => {
 
             {/* Task Items List with Smooth Hover Effects */}
             <div className="space-y-3">
-              {upcomingTasks.map((task) => (
+              {liveTasks.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#94A3B8] dark:text-slate-500">
+                  No upcoming tasks due today. All caught up!
+                </div>
+              ) : (
+                liveTasks.map((task) => (
                 <div
                   key={task.id}
                   onClick={() => handleTaskClick(task)}
@@ -487,14 +517,14 @@ const DashboardPage = () => {
                     {task.priority}
                   </span>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
 
           {/* Quick Bottom Action inside Tasks card */}
           <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between relative z-10">
             <span className="text-xs text-[#94A3B8] dark:text-slate-400">
-              4 pending activities for this week
+              {liveTasks.length} pending activities for this week
             </span>
             <Link
               to={ROUTES.TASKS}

@@ -7,6 +7,7 @@ import ProfileModal from '../components/profile/ProfileModal';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmDialogContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   {
@@ -63,9 +64,8 @@ const AppLayout = () => {
   const confirm = useConfirm();
   const { theme, toggleTheme, isDark } = useTheme();
 
-  const [user, setUser] = useState(() =>
-    JSON.parse(localStorage.getItem('leadflow_user') || '{"name":"John Doe","role":"Admin","email":"admin@mini.crm"}')
-  );
+  const { user: authUser, logout: authLogout } = useAuth();
+  const user = authUser || { name: '', role: '', email: '' };
 
   const handleLogoutClick = async () => {
     setProfileDropdownOpen(false);
@@ -75,13 +75,12 @@ const AppLayout = () => {
       confirmText: 'Log Out',
       cancelText: 'Stay Logged In',
       type: 'danger',
-      itemName: user.name || 'John Doe',
-      itemBadge: user.role || 'Admin'
+      itemName: user.name || 'User Account',
+      itemBadge: user.role || 'Member'
     });
 
     if (confirmed) {
-      localStorage.removeItem('leadflow_token');
-      localStorage.removeItem('leadflow_user');
+      authLogout();
       toast.info('Signed Out', 'You have been safely signed out of your account.');
       navigate(ROUTES.LOGIN);
     }
@@ -100,8 +99,8 @@ const AppLayout = () => {
     };
   }, []);
 
-  const handleUserUpdated = (updatedUser) => {
-    setUser(updatedUser);
+  const handleUserUpdated = () => {
+    // AuthContext updates user state across the entire app
   };
 
   const todayFormatted = new Date().toLocaleDateString('en-US', {
@@ -152,14 +151,14 @@ const AppLayout = () => {
             title="Open Profile Settings"
           >
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20 shadow-sm">
-              <span className="uppercase">{user.name ? user.name.charAt(0) : 'J'}</span>
+              <span className="uppercase">{user.name ? user.name.charAt(0) : 'U'}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate leading-tight">
-                {user.name || 'John Doe'}
+                {user.name || 'User'}
               </p>
               <p className="text-xs text-[#94A3B8] truncate">
-                {user.role || 'Admin'}
+                {user.role || 'Member'}
               </p>
             </div>
           </div>
@@ -312,14 +311,14 @@ const AppLayout = () => {
                 title="User Menu"
               >
                 <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#A5B4FC] flex items-center justify-center text-white font-bold text-sm border-2 border-white dark:border-white/20 shadow-sm shrink-0">
-                  <span className="uppercase">{user.name ? user.name.charAt(0) : 'J'}</span>
+                  <span className="uppercase">{user.name ? user.name.charAt(0) : 'U'}</span>
                 </div>
                 <div className="hidden sm:block text-left">
                   <p className="text-xs font-semibold text-[#1E293B] dark:text-slate-100 leading-tight">
-                    {user.name || 'John Doe'}
+                    {user.name || 'User'}
                   </p>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400">
-                    {user.role || 'Admin'}
+                    {user.role || 'Member'}
                   </p>
                 </div>
                 <svg
@@ -339,12 +338,12 @@ const AppLayout = () => {
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#1A1C32] rounded-2xl shadow-[0_20px_45px_-10px_rgba(0,0,0,0.5)] border border-slate-200/90 dark:border-white/10 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {/* User Header Summary */}
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
-                    <p className="text-xs font-bold text-[#1E293B] dark:text-white truncate">{user.name || 'John Doe'}</p>
-                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate">{user.email || 'admin@mini.crm'}</p>
+                    <p className="text-xs font-bold text-[#1E293B] dark:text-white truncate">{user.name || 'User'}</p>
+                    <p className="text-[11px] text-[#64748B] dark:text-slate-400 truncate">{user.email || ''}</p>
                     <div className="mt-2 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[10px] font-bold text-[#6366F1] bg-indigo-50 dark:bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30">
-                        {user.role || 'Admin'}
+                        {user.role || 'Member'}
                       </span>
                     </div>
                   </div>

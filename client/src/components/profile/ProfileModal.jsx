@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+import { useAuth } from '../../context/AuthContext';
 
 const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }) => {
   const navigate = useNavigate();
-  const storedUser = JSON.parse(
-    localStorage.getItem('leadflow_user') || '{"name":"John Doe","email":"admin@mini.crm","role":"Admin"}'
-  );
+  const { user: authUser, updateUser, changePassword, logout } = useAuth();
+  
+  const currentUser = authUser || {};
 
   const [activeTab, setActiveTab] = useState(initialTab || 'profile');
-  const [name, setName] = useState(storedUser.name || 'John Doe');
-  const [email, setEmail] = useState(storedUser.email || 'admin@mini.crm');
-  const [phone, setPhone] = useState(storedUser.phone || '+1 (555) 234-5678');
-  const [role, setRole] = useState(storedUser.role || 'Admin');
+  const [name, setName] = useState(currentUser.name || '');
+  const [email, setEmail] = useState(currentUser.email || '');
+  const [phone, setPhone] = useState(currentUser.phone || '');
+  const [role, setRole] = useState(currentUser.role || '');
+  const [saving, setSaving] = useState(false);
   
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -30,28 +32,38 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
       setActiveTab(initialTab || 'profile');
       setErrorMsg('');
       setSuccessMsg('');
+      if (authUser) {
+        setName(authUser.name || '');
+        setEmail(authUser.email || '');
+        setRole(authUser.role || 'Admin');
+      }
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen, initialTab, authUser]);
 
   if (!isOpen) return null;
 
-  const handleProfileSave = (e) => {
+  const handleProfileSave = async (e) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
       setErrorMsg('Name and email are required.');
       return;
     }
 
-    const updated = { ...storedUser, name, email, phone, role };
-    localStorage.setItem('leadflow_user', JSON.stringify(updated));
-    setSuccessMsg('Profile updated successfully!');
+    setSaving(true);
     setErrorMsg('');
-    if (onUserUpdated) onUserUpdated(updated);
-
-    setTimeout(() => setSuccessMsg(''), 3000);
+    try {
+      const updated = await updateUser({ name: name.trim(), email: email.trim() });
+      setSuccessMsg('Profile updated successfully!');
+      if (onUserUpdated) onUserUpdated(updated);
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to update profile.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (!currentPassword) {
       setErrorMsg('Please enter your current password.');
@@ -66,18 +78,24 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
       return;
     }
 
-    setSuccessMsg('Password changed successfully!');
+    setSaving(true);
     setErrorMsg('');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-
-    setTimeout(() => setSuccessMsg(''), 3000);
+    try {
+      await changePassword({ currentPassword, newPassword });
+      setSuccessMsg('Password changed successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to change password.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('leadflow_token');
-    localStorage.removeItem('leadflow_user');
+    logout();
     onClose();
     navigate(ROUTES.LOGIN);
   };
@@ -268,9 +286,11 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                 </button>
                 <button
                   type="submit"
-                  className="px-6 h-11 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs shadow-[0_4px_14px_rgba(99,102,241,0.35)] transition-all cursor-pointer"
+                  disabled={saving}
+                  className="px-6 h-11 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs shadow-[0_4px_14px_rgba(99,102,241,0.35)] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Save Profile Changes
+                  {saving && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  {saving ? 'Saving...' : 'Save Profile Changes'}
                 </button>
               </div>
             </form>
@@ -344,9 +364,11 @@ const ProfileModal = ({ isOpen, onClose, onUserUpdated, initialTab = 'profile' }
                 </button>
                 <button
                   type="submit"
-                  className="px-6 h-11 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs shadow-[0_4px_14px_rgba(99,102,241,0.35)] transition-all cursor-pointer"
+                  disabled={saving}
+                  className="px-6 h-11 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-xs shadow-[0_4px_14px_rgba(99,102,241,0.35)] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Update Password
+                  {saving && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  {saving ? 'Updating...' : 'Update Password'}
                 </button>
               </div>
             </form>
