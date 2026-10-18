@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { connectDB, disconnectDB } = require('../config/db');
 const { User, Company, Lead, Task, Notification } = require('../models');
 
-const seedDatabase = async () => {
+const seedDatabase = async (isDirectRun = (require.main === module)) => {
   try {
     console.log('==================================================');
     console.log('  Starting LeadFlow CRM Database Migration & Seed ');
@@ -333,12 +333,18 @@ const seedDatabase = async () => {
     console.log('  Sales Rep 2: mike.ross@mini.crm / password123');
     console.log('==================================================\n');
 
-    await disconnectDB();
-    process.exit(0);
+    if (isDirectRun) {
+      await disconnectDB();
+      process.exit(0);
+    }
+    return true;
   } catch (error) {
     console.error('\n❌ Seeding failed with error:', error);
-    await disconnectDB();
-    process.exit(1);
+    if (isDirectRun) {
+      await disconnectDB();
+      process.exit(1);
+    }
+    throw error;
   }
 };
 

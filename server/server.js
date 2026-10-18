@@ -8,8 +8,23 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and auto-seed if newly deployed / empty database
+connectDB().then(async () => {
+  try {
+    const { User } = require('./src/models');
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      console.log('[Database] Empty database detected. Auto-seeding initial collections and demo users...');
+      const seedDatabase = require('./src/migrations/seed');
+      await seedDatabase(false);
+      console.log('[Database] Auto-seeding completed successfully.');
+    }
+  } catch (seedErr) {
+    console.warn('[Database] Auto-seed check skipped:', seedErr.message);
+  }
+}).catch((err) => {
+  console.error('[Database Connection Failed]', err.message);
+});
 
 // Start Express HTTP Server
 const server = app.listen(PORT, () => {
