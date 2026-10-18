@@ -7,6 +7,7 @@ import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import LeadsPage from '../pages/LeadsPage';
 import CompaniesPage from '../pages/CompaniesPage';
+import CompanyDetailsPage from '../pages/CompanyDetailsPage';
 import TasksPage from '../pages/TasksPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -22,6 +23,7 @@ const AppRoutes = () => {
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.LEADS} element={<LeadsPage />} />
           <Route path={ROUTES.COMPANIES} element={<CompaniesPage />} />
+          <Route path={ROUTES.COMPANY_DETAILS} element={<CompanyDetailsPage />} />
           <Route path={ROUTES.TASKS} element={<TasksPage />} />
         </Route>
       </Route>
