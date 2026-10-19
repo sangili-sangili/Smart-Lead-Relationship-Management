@@ -14,6 +14,9 @@ import NotFoundPage from '../pages/NotFoundPage';
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Route /index.html directly to root/dashboard to prevent 404 on static rewrite */}
+      <Route path="/index.html" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+
       {/* Public Route */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
