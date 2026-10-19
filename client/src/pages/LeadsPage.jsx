@@ -198,7 +198,7 @@ const LeadsPage = () => {
     <div className="space-y-6 animate-fade-in-up">
       {/* Top Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl sm:text-[1.85rem] font-bold text-[#1E293B] dark:text-white tracking-tight mb-1">
             Leads
           </h1>
@@ -211,22 +211,22 @@ const LeadsPage = () => {
         <button
           type="button"
           onClick={handleOpenAddModal}
-          className="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:opacity-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/25 hover:shadow-indigo-600/35 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+          className="shrink-0 whitespace-nowrap self-start sm:self-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#6366F1] to-[#4F46E5] hover:opacity-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/25 hover:shadow-indigo-600/35 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Add Lead</span>
+          <span className="whitespace-nowrap">Add Lead</span>
         </button>
       </div>
 
       {/* Filter and Search Bar Card matching Figma */}
-      <div className="bg-white dark:bg-[#15172A] rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] dark:border-[#222543] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-white dark:bg-[#15172A] rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] dark:border-[#222543] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 sm:gap-4">
         
         {/* Search Input with Magnifier Icon */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-0">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#94A3B8]">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -235,12 +235,12 @@ const LeadsPage = () => {
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search leads by name, email..."
-            className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
+            className="w-full h-11 pl-10 pr-9 rounded-xl bg-slate-50/70 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs sm:text-sm text-[#1E293B] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 transition-all"
           />
           {searchTerm && (
             <button
               onClick={() => { setSearchTerm(''); setPage(1); }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -250,7 +250,7 @@ const LeadsPage = () => {
         </div>
 
         {/* Filter Dropdowns and Clear Action */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Status Filter Custom Dropdown (100% visible in dark and light modes) */}
           <div className="w-full sm:w-44">
             <CustomDropdown
@@ -282,7 +282,7 @@ const LeadsPage = () => {
             <button
               type="button"
               onClick={handleClearFilters}
-              className="px-3 py-2 text-xs font-semibold text-[#6366F1] dark:text-indigo-400 hover:text-[#4F46E5] hover:underline cursor-pointer transition-colors"
+              className="px-3 py-2 text-xs font-semibold text-[#6366F1] dark:text-indigo-400 hover:text-[#4F46E5] hover:underline cursor-pointer transition-colors self-end sm:self-auto"
             >
               Clear
             </button>

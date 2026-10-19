@@ -112,7 +112,7 @@ const AppLayout = () => {
   return (
     <div className="min-h-screen flex bg-[#F4F6FD] dark:bg-[#0B0C16] text-[#1E293B] dark:text-slate-100 font-['Inter',sans-serif] transition-colors duration-200">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-[230px] bg-[#1A1C32] bg-gradient-to-b from-[#1F213D] via-[#1A1C32] to-[#141528] text-white shrink-0 sticky top-0 h-screen z-30 select-none border-r border-[#1E2042]">
+      <aside className="hidden md:flex flex-col w-[230px] bg-[#1A1C32] bg-gradient-to-b from-[#1F213D] via-[#1A1C32] to-[#141528] text-white shrink-0 sticky top-0 h-screen z-20 select-none border-r border-[#1E2042]">
         
         {/* Top Brand Logo */}
         <div className="px-6 pt-6 pb-8">
@@ -217,7 +217,7 @@ const AppLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Bar Header with Live Widget and Quick Actions */}
-        <header className="h-[70px] bg-white dark:bg-[#15172A] border-b border-[#E2E8F0] dark:border-[#222543] px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200">
+        <header className="h-[70px] bg-white dark:bg-[#15172A] border-b border-[#E2E8F0] dark:border-[#222543] px-4 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 transition-colors duration-200">
           
           {/* Left Area: Mobile Trigger + Live Status / Quick Action instead of search */}
           <div className="flex items-center gap-4">
@@ -431,7 +431,7 @@ const AppLayout = () => {
         </header>
 
         {/* Page Content View */}
-        <main className="flex-1 p-6 sm:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <Outlet />
         </main>
       </div>

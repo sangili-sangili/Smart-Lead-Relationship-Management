@@ -255,13 +255,13 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Top 4 KPI Summary Cards with Gradient, Multiple Circles & Hover Lift */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Top 4 KPI Summary Cards with Gradient, Multiple Circles & Hover Lift - responsive 2 cols on tablet/laptop, 4 on xl */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {liveStats.map((stat, i) => (
           <div
             key={stat.id}
             onClick={() => toast.info(stat.label, `Viewing detailed pipeline analytics for ${stat.value} items.`)}
-            className={`group relative overflow-hidden bg-gradient-to-br ${stat.gradient} dark:bg-gradient-to-br dark:from-[#15172A] dark:via-[#1A1C32] dark:to-[#15172A] rounded-[24px] p-6 border ${stat.borderColor} dark:border-white/10 ${stat.shadowColor} shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col justify-between`}
+            className={`group relative overflow-hidden bg-gradient-to-br ${stat.gradient} dark:bg-gradient-to-br dark:from-[#15172A] dark:via-[#1A1C32] dark:to-[#15172A] rounded-[22px] sm:rounded-[24px] p-5 sm:p-6 border ${stat.borderColor} dark:border-white/10 ${stat.shadowColor} shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col justify-between`}
             style={{ animationDelay: `${i * 80}ms` }}
           >
             {/* Multiple Background Decorative Circle Shapes */}
@@ -285,24 +285,24 @@ const DashboardPage = () => {
             {/* Card Content (Elevated above background circles) */}
             <div className="relative z-10">
               {/* Top Row: Icon + Label */}
-              <div className="flex items-center gap-3.5 mb-5">
+              <div className="flex items-center gap-3 sm:gap-3.5 mb-4 sm:mb-5 min-w-0">
                 <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 text-white shadow-md ${stat.iconBg} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 text-white shadow-md ${stat.iconBg} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}
                 >
                   {stat.icon}
                 </div>
-                <span className="text-[0.85rem] font-semibold text-[#475569] dark:text-slate-300 group-hover:text-[#1E293B] dark:group-hover:text-white transition-colors">
+                <span className="text-xs sm:text-[0.85rem] font-semibold text-[#475569] dark:text-slate-300 group-hover:text-[#1E293B] dark:group-hover:text-white transition-colors truncate">
                   {stat.label}
                 </span>
               </div>
 
               {/* Bottom Row: Metric Value + Trend Badge */}
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-[2.25rem] font-black text-[#1E293B] dark:text-white tracking-tight leading-none group-hover:scale-105 origin-left transition-transform duration-300">
+              <div className="flex items-baseline justify-between gap-2 pt-1">
+                <span className="text-2xl sm:text-[2.25rem] font-black text-[#1E293B] dark:text-white tracking-tight leading-none group-hover:scale-105 origin-left transition-transform duration-300">
                   {stat.value}
                 </span>
-                <span className="text-xs font-bold text-[#10B981] bg-emerald-50/90 dark:bg-emerald-500/15 border border-emerald-200/60 dark:border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span className="text-xs font-bold text-[#10B981] bg-emerald-50/90 dark:bg-emerald-500/15 border border-emerald-200/60 dark:border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs shrink-0">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
                   {stat.trend}
@@ -314,7 +314,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Bottom Section: Leads by Status (Enlarged Graph) & Upcoming Tasks */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         
         {/* Card 1: Leads by Status with ENLARGED Donut Graph */}
         <div className="bg-white dark:bg-[#15172A] rounded-[26px] p-6 sm:p-7 lg:p-8 border border-[#E2E8F0]/80 dark:border-[#222543] shadow-[0_4px_25px_-5px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all duration-300 flex flex-col justify-between relative overflow-hidden">

@@ -89,13 +89,13 @@ const NotificationModal = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent backdrop-blur-[1px] sm:backdrop-blur-none" onClick={onClose} />
 
-      {/* Popover Card */}
-      <div className="absolute right-0 mt-2 w-[360px] sm:w-[400px] bg-white dark:bg-[#1A1C32] rounded-2xl shadow-[0_20px_50px_-12px_rgba(30,27,75,0.2),0_0_1px_1px_rgba(99,102,241,0.08)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)] border border-[#E2E8F0] dark:border-white/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+      {/* Popover Card - responsive positioning for mobile, tablet, and desktop */}
+      <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-[-60px] md:right-[-40px] lg:right-0 top-[68px] sm:top-full mt-2 w-auto sm:w-[380px] max-w-[calc(100vw-24px)] sm:max-w-[390px] bg-white dark:bg-[#1A1C32] rounded-2xl shadow-[0_20px_50px_-12px_rgba(30,27,75,0.25),0_0_1px_1px_rgba(99,102,241,0.08)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)] border border-[#E2E8F0] dark:border-white/10 z-50 overflow-hidden flex flex-col max-h-[82vh] animate-in fade-in slide-in-from-top-2 duration-200">
         
         {/* Header */}
-        <div className="p-4 px-5 border-b border-[#E2E8F0] dark:border-white/10 flex items-center justify-between bg-gradient-to-r from-white to-slate-50 dark:from-[#1A1C32] dark:to-[#16182E]">
+        <div className="p-3.5 px-4 sm:p-4 sm:px-5 border-b border-[#E2E8F0] dark:border-white/10 flex items-center justify-between shrink-0 bg-gradient-to-r from-white to-slate-50 dark:from-[#1A1C32] dark:to-[#16182E]">
           <div className="flex items-center gap-2.5">
             <h3 className="font-bold text-[0.95rem] text-[#1E293B] dark:text-white">
               Notifications
@@ -118,7 +118,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
             )}
             <button
               onClick={onClose}
-              className="text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -128,7 +128,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex border-b border-[#E2E8F0] dark:border-white/10 px-5 bg-slate-50/50 dark:bg-white/5">
+        <div className="flex border-b border-[#E2E8F0] dark:border-white/10 px-4 sm:px-5 bg-slate-50/50 dark:bg-white/5 shrink-0">
           <button
             onClick={() => setActiveTab('all')}
             className={`py-2.5 text-xs font-semibold border-b-2 mr-5 transition-colors cursor-pointer ${
@@ -152,7 +152,7 @@ const NotificationModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Notifications List */}
-        <div className="max-h-[380px] overflow-y-auto divide-y divide-[#E2E8F0]/60 dark:divide-white/10">
+        <div className="flex-1 max-h-[360px] sm:max-h-[380px] overflow-y-auto divide-y divide-[#E2E8F0]/60 dark:divide-white/10">
           {loading ? (
             <div className="p-8 text-center text-xs text-[#94A3B8] dark:text-slate-500 flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
