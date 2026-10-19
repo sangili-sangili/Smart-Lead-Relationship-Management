@@ -322,133 +322,148 @@ const DashboardPage = () => {
           {/* Subtle Background Glow */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50/40 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6 relative z-10">
-            <div>
-              <h2 className="text-[1.15rem] font-bold text-[#1E293B] dark:text-white tracking-tight">
-                Leads by Status
-              </h2>
-              <p className="text-xs text-[#94A3B8] dark:text-slate-400 mt-0.5">
-                Distribution across {totalLeadsCount} active pipeline leads
-              </p>
-            </div>
-            <div className="text-xs font-medium text-[#64748B] dark:text-slate-300 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/10 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1]" />
-              <span>Pipeline Stage</span>
-            </div>
-          </div>
-
-          {/* Donut Chart & Legend Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8 py-2 relative z-10">
-            
-            {/* ENLARGED Donut Chart SVG matching Figma (Size increased to w-64 h-64 sm:w-72 sm:h-72) */}
-            <div className="relative w-60 h-60 sm:w-72 sm:h-72 shrink-0 flex items-center justify-center">
-              <svg
-                className="w-full h-full -rotate-90 filter drop-shadow-xs"
-                viewBox="0 0 120 120"
-              >
-                {/* 
-                  Radius r = 44, Circumference C = 2 * PI * 44 = 276.46
-                  StrokeWidth = 22 for thick, prominent Figma donut graph
-                */}
-                {/* Base subtle track ring */}
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="44"
-                  fill="transparent"
-                  stroke="#F1F5F9"
-                  className="dark:stroke-[#222543]"
-                  strokeWidth="22"
-                />
-
-                {/* Render status segments */}
-                {liveStatusData.map((item) => {
-                  const isHovered = hoveredStatus?.label === item.label;
-                  return (
-                    <circle
-                      key={item.label}
-                      cx="60"
-                      cy="60"
-                      r="44"
-                      fill="transparent"
-                      stroke={item.color}
-                      strokeWidth={isHovered ? 24 : 22}
-                      strokeDasharray={`${item.dashLength} 276.46`}
-                      strokeDashoffset={item.dashOffset}
-                      className="transition-all duration-300 cursor-pointer"
-                      style={{
-                        opacity: hoveredStatus ? (isHovered ? 1 : 0.45) : 1
-                      }}
-                      onMouseEnter={() => setHoveredStatus(item)}
-                      onMouseLeave={() => setHoveredStatus(null)}
-                    />
-                  );
-                })}
-              </svg>
-
-              {/* Central Donut Typography Display */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
-                <span className="text-4xl sm:text-[2.75rem] font-black text-[#1E293B] dark:text-white leading-none mb-1 tracking-tight">
-                  {hoveredStatus ? hoveredStatus.count : totalLeadsCount}
-                </span>
-                <span className="text-xs sm:text-[0.825rem] font-semibold text-[#64748B] dark:text-slate-400 tracking-wide">
-                  {hoveredStatus ? hoveredStatus.label : 'Total Leads'}
-                </span>
-                {hoveredStatus && (
-                  <span className="text-[11px] font-bold text-[#6366F1] mt-0.5 animate-pulse">
-                    {hoveredStatus.percentage} of pipeline
-                  </span>
-                )}
+          {/* Group Header + Chart together so there is NEVER an empty gap between them */}
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <div>
+                <h2 className="text-[1.15rem] font-bold text-[#1E293B] dark:text-white tracking-tight">
+                  Leads by Status
+                </h2>
+                <p className="text-xs text-[#94A3B8] dark:text-slate-400 mt-0.5">
+                  Distribution across {totalLeadsCount} active pipeline leads
+                </p>
+              </div>
+              <div className="text-xs font-medium text-[#64748B] dark:text-slate-300 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/10 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1]" />
+                <span>Pipeline Stage</span>
               </div>
             </div>
 
-            {/* Legend Breakdown with Interactive Hover */}
-            <div className="w-full sm:w-auto flex-1 space-y-2.5">
-              {liveStatusData.map((item) => {
-                const isHovered = hoveredStatus?.label === item.label;
-                return (
-                  <div
-                    key={item.label}
-                    onMouseEnter={() => setHoveredStatus(item)}
-                    onMouseLeave={() => setHoveredStatus(null)}
-                    onClick={() => {
-                      setHoveredStatus(item);
-                      toast.info(`${item.label} Leads`, `${item.count} leads (${item.percentage} of pipeline) in this status.`);
-                    }}
-                    className={`flex items-center justify-between p-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
-                      isHovered
-                        ? 'bg-slate-50 dark:bg-white/10 border-slate-300 dark:border-white/20 shadow-xs translate-x-1'
-                        : 'border-transparent hover:bg-slate-50/70 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white dark:ring-[#15172A] shadow-xs transition-transform duration-200"
-                        style={{
-                          backgroundColor: item.color,
-                          transform: isHovered ? 'scale(1.25)' : 'scale(1)'
-                        }}
-                      />
-                      <span className={`text-xs sm:text-sm font-semibold transition-colors ${
-                        isHovered ? 'text-[#1E293B] dark:text-white' : 'text-[#475569] dark:text-slate-300'
-                      }`}>
-                        {item.label}
-                      </span>
-                    </div>
+            {/* Donut Chart & Legend Section */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8 py-2">
+              {/* ENLARGED Donut Chart SVG matching Figma (Size increased to w-64 h-64 sm:w-72 sm:h-72) */}
+              <div className="relative w-60 h-60 sm:w-72 sm:h-72 shrink-0 flex items-center justify-center">
+                <svg
+                  className="w-full h-full -rotate-90 filter drop-shadow-xs"
+                  viewBox="0 0 120 120"
+                >
+                  {/* 
+                    Radius r = 44, Circumference C = 2 * PI * 44 = 276.46
+                    StrokeWidth = 22 for thick, prominent Figma donut graph
+                  */}
+                  {/* Base subtle track ring */}
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="44"
+                    fill="transparent"
+                    stroke="#F1F5F9"
+                    className="dark:stroke-[#222543]"
+                    strokeWidth="22"
+                  />
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#1E293B] dark:text-white">
-                        {item.count}
-                      </span>
-                      <span className="text-xs font-medium text-[#94A3B8] dark:text-slate-400">
-                        ({item.percentage})
-                      </span>
+                  {/* Render status segments */}
+                  {liveStatusData.map((item) => {
+                    const isHovered = hoveredStatus?.label === item.label;
+                    return (
+                      <circle
+                        key={item.label}
+                        cx="60"
+                        cy="60"
+                        r="44"
+                        fill="transparent"
+                        stroke={item.color}
+                        strokeWidth={isHovered ? 24 : 22}
+                        strokeDasharray={`${item.dashLength} 276.46`}
+                        strokeDashoffset={item.dashOffset}
+                        className="transition-all duration-300 cursor-pointer"
+                        style={{
+                          opacity: hoveredStatus ? (isHovered ? 1 : 0.45) : 1
+                        }}
+                        onMouseEnter={() => setHoveredStatus(item)}
+                        onMouseLeave={() => setHoveredStatus(null)}
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* Central Donut Typography Display */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-all duration-200">
+                  <span className="text-4xl sm:text-[2.75rem] font-black text-[#1E293B] dark:text-white leading-none mb-1 tracking-tight">
+                    {hoveredStatus ? hoveredStatus.count : totalLeadsCount}
+                  </span>
+                  <span className="text-xs sm:text-[0.825rem] font-semibold text-[#64748B] dark:text-slate-400 tracking-wide">
+                    {hoveredStatus ? hoveredStatus.label : 'Total Leads'}
+                  </span>
+                  {hoveredStatus && (
+                    <span className="text-[11px] font-bold text-[#6366F1] mt-0.5 animate-pulse">
+                      {hoveredStatus.percentage} of pipeline
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Legend Breakdown with Interactive Hover */}
+              <div className="w-full sm:w-auto flex-1 space-y-2.5">
+                {liveStatusData.map((item) => {
+                  const isHovered = hoveredStatus?.label === item.label;
+                  return (
+                    <div
+                      key={item.label}
+                      onMouseEnter={() => setHoveredStatus(item)}
+                      onMouseLeave={() => setHoveredStatus(null)}
+                      onClick={() => {
+                        setHoveredStatus(item);
+                        toast.info(`${item.label} Leads`, `${item.count} leads (${item.percentage} of pipeline) in this status.`);
+                      }}
+                      className={`flex items-center justify-between p-2.5 rounded-xl transition-all duration-200 cursor-pointer border ${
+                        isHovered
+                          ? 'bg-slate-50 dark:bg-white/10 border-slate-300 dark:border-white/20 shadow-xs translate-x-1'
+                          : 'border-transparent hover:bg-slate-50/70 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white dark:ring-[#15172A] shadow-xs transition-transform duration-200"
+                          style={{
+                            backgroundColor: item.color,
+                            transform: isHovered ? 'scale(1.25)' : 'scale(1)'
+                          }}
+                        />
+                        <span className={`text-xs sm:text-sm font-semibold transition-colors ${
+                          isHovered ? 'text-[#1E293B] dark:text-white' : 'text-[#475569] dark:text-slate-300'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-[#1E293B] dark:text-white">
+                          {item.count}
+                        </span>
+                        <span className="text-xs font-medium text-[#94A3B8] dark:text-slate-400">
+                          ({item.percentage})
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+          </div>
+
+          {/* Quick Bottom Action inside Leads card - matching Card 2's footer for perfect symmetry */}
+          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between relative z-10">
+            <span className="text-xs text-[#94A3B8] dark:text-slate-400">
+              {totalLeadsCount} total active pipeline leads
+            </span>
+            <Link
+              to={ROUTES.LEADS}
+              className="text-xs font-semibold text-[#475569] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white flex items-center gap-1"
+            >
+              View pipeline leads &rarr;
+            </Link>
           </div>
         </div>
 
